@@ -1,0 +1,6 @@
+{
+  "version": "2.2.3",
+  "url": "https://timer-pro-app.netlify.app/timer.html",
+  "note": "V2.2.3 更新：\n1. 🌐 新增产品官网首页（火绒风格）\n2. 🎨 修复关于我们页面'点击复制'文字样式\n3. 🐛 修复多个已知bug",
+  "forced": false
+}
