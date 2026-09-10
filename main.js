@@ -1454,7 +1454,8 @@ function openFriends(){
     // ============ PWA 注册 ============
     if('serviceWorker' in navigator){
         window.addEventListener('load',()=>{
-            navigator.serviceWorker.register('/service-worker.js').catch(()=>{
+            const swPath = location.pathname.includes('/timer-pro') ? '/timer-pro/service-worker.js' : '/service-worker.js';
+            navigator.serviceWorker.register(swPath).catch(()=>{
                 // 忽略注册失败（file:// 协议下不可用）
             });
         });

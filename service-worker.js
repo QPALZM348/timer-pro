@@ -1,12 +1,14 @@
 const CACHE_NAME = 'timer-pro-v2.2.3';
+// 动态获取基础路径（兼容根路径和子路径部署）
+const BASE = self.registration.scope.replace(/\/$/, '');
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/main.js',
-  '/manifest.json',
-  '/supabase.min.js',
-  '/icon-192.png',
-  '/icon-512.png'
+  BASE + '/',
+  BASE + '/index.html',
+  BASE + '/main.js',
+  BASE + '/manifest.json',
+  BASE + '/supabase.min.js',
+  BASE + '/icon-192.png',
+  BASE + '/icon-512.png'
 ];
 
 // 安装：预缓存核心资源
@@ -31,7 +33,6 @@ self.addEventListener('activate', (e) => {
 
 // 请求：缓存优先，网络兜底
 self.addEventListener('fetch', (e) => {
-  // 只缓存 GET 请求
   if (e.request.method !== 'GET') return;
 
   e.respondWith(
@@ -39,16 +40,14 @@ self.addEventListener('fetch', (e) => {
       .then((cached) => {
         if (cached) return cached;
         return fetch(e.request).then((response) => {
-          // 缓存成功的同源响应
           if (response && response.status === 200 && response.type === 'basic') {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(e.request, clone));
           }
           return response;
         }).catch(() => {
-          // 网络失败时返回离线页面
           if (e.request.mode === 'navigate') {
-            return caches.match('/index.html');
+            return caches.match(BASE + '/index.html');
           }
         });
       })
