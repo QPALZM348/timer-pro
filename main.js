@@ -702,6 +702,27 @@ function openFriends(){
     let codeTimer=null,currentCode='',isRegisterMode=false,isPhoneLoginMode=false;
 
     openVipBtn.onclick=()=>{const u=getUserData();if(!u.account)return alert('请先登录');selectedPlanIndex=0;renderPlans();vipModal.classList.remove('hidden');};
+    // 激活码激活 VIP
+    const activateCodeBtn = document.getElementById('activateCodeBtn');
+    if(activateCodeBtn){
+        activateCodeBtn.onclick=()=>{
+            const codeInput = document.getElementById('vipActivationCode');
+            const code = codeInput ? codeInput.value.trim() : '';
+            if(!code)return alert('请输入激活码');
+            const VALID_CODES = ['TIMER-PRO-8888','VIP-6666-9999','PRO-2024-8888','TP-VIP-88888','计时器PRO-VIP'];
+            if(VALID_CODES.includes(code.toUpperCase())){
+                const u=getUserData();
+                u.isVip=true;u.vipExpireTime='2099-12-31';saveUserData(u);
+                localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');
+                refreshUserUI();updateVipLocks();
+                alert('🎉 VIP激活成功！所有VIP功能已解锁');
+                vipModal.classList.add('hidden');
+                if(codeInput)codeInput.value='';
+            }else{
+                alert('激活码无效，请检查后重试');
+            }
+        };
+    }
     tabPwdLogin.onclick=()=>{isPhoneLoginMode=false;tabPwdLogin.classList.add('active');tabPhoneLogin.classList.remove('active');pwdLoginPanel.classList.remove('hidden');phoneLoginPanel.classList.add('hidden');};
     tabPhoneLogin.onclick=()=>{isPhoneLoginMode=true;tabPwdLogin.classList.remove('active');tabPhoneLogin.classList.add('active');pwdLoginPanel.classList.add('hidden');phoneLoginPanel.classList.remove('hidden');};
     getCodeBtn.onclick=()=>{
@@ -716,15 +737,31 @@ function openFriends(){
     switchModeBtn.onclick=()=>{isRegisterMode=!isRegisterMode;submitBtn.textContent=isRegisterMode?'注册':'登录';switchModeBtn.textContent=isRegisterMode?'切换登录':'切换注册';};
     submitBtn.onclick=()=>{
         const u=getUserData();
+        // 激活码验证（预设激活码，付费后由官方发放）
+        const VALID_ACTIVATION_CODES = ['TIMER-PRO-8888','VIP-6666-9999','PRO-2024-8888','TP-VIP-88888','计时器PRO-VIP'];
+        const actCode = document.getElementById('activationCodeInput') ? document.getElementById('activationCodeInput').value.trim() : '';
+        let activateVip = false;
+        if(actCode){
+            if(VALID_ACTIVATION_CODES.includes(actCode.toUpperCase())){
+                activateVip = true;
+            }else{
+                alert('激活码无效，请检查后重试');
+                return;
+            }
+        }
         if(isPhoneLoginMode){
             const p=phoneInput.value.trim(),c=codeInput.value.trim();
             if(!p)return alert('填写手机号');if(c!==currentCode)return alert('验证码错误');
             if(isRegisterMode){
                 if(u.account)return alert('已登录账号，请退出');
-                const nu={account:p,password:'',phone:p,avatar:'https://picsum.photos/id/1001/60/60',isVip:false,vipExpireTime:null};
-                saveUserData(nu);alert('注册成功自动登录');refreshUserUI();phoneInput.value=codeInput.value='';currentCode='';
+                const nu={account:p,password:'',phone:p,avatar:'https://picsum.photos/id/1001/60/60',isVip:activateVip,vipExpireTime:activateVip?'2099-12-31':null};
+                saveUserData(nu);alert(activateVip?'注册成功，VIP已激活！':'注册成功自动登录');refreshUserUI();phoneInput.value=codeInput.value='';currentCode='';
+                if(activateVip){localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}
             }else{
-                if(u.phone===p||u.account===p){alert('登录成功');refreshUserUI();phoneInput.value=codeInput.value='';currentCode='';}else alert('手机号未注册');
+                if(u.phone===p||u.account===p){
+                    if(activateVip){u.isVip=true;u.vipExpireTime='2099-12-31';saveUserData(u);localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}
+                    alert(activateVip?'登录成功，VIP已激活！':'登录成功');refreshUserUI();phoneInput.value=codeInput.value='';currentCode='';
+                }else alert('手机号未注册');
             }
             return;
         }
@@ -732,11 +769,16 @@ function openFriends(){
         if(!acc||!pwd)return alert('账号密码不能为空');
         if(isRegisterMode){
             if(u.account)return alert('账号已存在');
-            const nu={account:acc,password:pwd,phone:'',avatar:'https://picsum.photos/id/1001/60/60',isVip:false,vipExpireTime:null};
-            saveUserData(nu);alert('注册成功');isRegisterMode=false;submitBtn.textContent='登录';switchModeBtn.textContent='切换注册';accInput.value=pwdInput.value='';
+            const nu={account:acc,password:pwd,phone:'',avatar:'https://picsum.photos/id/1001/60/60',isVip:activateVip,vipExpireTime:activateVip?'2099-12-31':null};
+            saveUserData(nu);alert(activateVip?'注册成功，VIP已激活！':'注册成功');isRegisterMode=false;submitBtn.textContent='登录';switchModeBtn.textContent='切换注册';accInput.value=pwdInput.value='';
+            if(activateVip){localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}
         }else{
-            if(u.account===acc&&u.password===pwd){alert('登录成功');refreshUserUI();accInput.value=pwdInput.value='';}else alert('账号密码错误');
+            if(u.account===acc&&u.password===pwd){
+                if(activateVip){u.isVip=true;u.vipExpireTime='2099-12-31';saveUserData(u);localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}
+                alert(activateVip?'登录成功，VIP已激活！':'登录成功');refreshUserUI();accInput.value=pwdInput.value='';
+            }else alert('账号密码错误');
         }
+        if(actCode)document.getElementById('activationCodeInput').value='';
     };
     forgetPwdBtn.onclick=()=>resetPwdWrap.classList.remove('hidden');
     document.getElementById('backLoginBtn').onclick=()=>{resetPwdWrap.classList.add('hidden');document.getElementById('resetAcc').value=document.getElementById('newPwd').value='';};

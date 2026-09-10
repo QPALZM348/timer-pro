@@ -758,6 +758,13 @@ body.fullscreen-mode .fs-exit-float{display:flex;}
     <div class="modal-box">
         <h3 class="modal-title">VIP会员充值套餐</h3>
         <div class="vip-plan-wrap" id="planWrap"></div>
+        <div style="margin:15px 0;padding:12px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:8px;">
+            <p style="font-size:14px;color:#ffd700;margin-bottom:8px;">🎫 已有激活码？</p>
+            <div style="display:flex;gap:8px;">
+                <input type="text" id="vipActivationCode" placeholder="请输入激活码" style="flex:1;padding:8px 12px;border:1px solid rgba(255,215,0,0.3);border-radius:6px;background:rgba(0,0,0,0.3);color:#fff;font-size:14px;">
+                <button id="activateCodeBtn" style="padding:8px 16px;background:linear-gradient(135deg,#ffd700,#ffaa00);border:none;border-radius:6px;color:#333;font-weight:bold;cursor:pointer;font-size:14px;">激活</button>
+            </div>
+        </div>
         <div class="modal-btn-row">
             <button id="modalClose">取消</button>
             <button class="confirm-pay" id="modalConfirm">立即开通</button>
@@ -1238,6 +1245,7 @@ body.fullscreen-mode .fs-exit-float{display:flex;}
                 <div id="pwdLoginPanel">
                     <div class="input-item"><input type="text" id="accInput" placeholder="账号"></div>
                     <div class="input-item"><input type="password" id="pwdInput" placeholder="密码"></div>
+                    <div class="input-item"><input type="text" id="activationCodeInput" placeholder="激活码（可选，付费获得）" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);"></div>
                 </div>
                 <div id="phoneLoginPanel" class="hidden">
                     <div class="input-item"><input type="tel" id="phoneInput" placeholder="手机号码"></div>
