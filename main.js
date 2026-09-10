@@ -1490,19 +1490,35 @@ function openFriends(){
 
     // 安装提示 (PWA)
     let deferredPrompt=null;
+    const forceInstall = new URLSearchParams(location.search).get('install') === '1';
+
     window.addEventListener('beforeinstallprompt',(e)=>{
         e.preventDefault();
         deferredPrompt=e;
-        showInstallBanner();
+        if(forceInstall){
+            // 从官网"安装电脑版"按钮过来的，自动弹出安装提示
+            setTimeout(()=>{
+                if(deferredPrompt){
+                    deferredPrompt.prompt();
+                    deferredPrompt.userChoice.then(()=>{
+                        deferredPrompt=null;
+                    });
+                }else{
+                    showInstallBanner(true);
+                }
+            },1500);
+        }else{
+            showInstallBanner();
+        }
     });
 
-    function showInstallBanner(){
-        if(sessionStorage.getItem('installBannerShown'))return;
+    function showInstallBanner(force){
+        if(!force && sessionStorage.getItem('installBannerShown'))return;
         const banner=document.createElement('div');
         banner.className='install-banner';
         banner.innerHTML=`
-            <span>📱 可将计时器安装到桌面，像 App 一样使用</span>
-            <button id="installBtn" style="padding:6px 14px;font-size:13px;background:#0cf;color:#000;border:none;border-radius:5px;cursor:pointer;">安装</button>
+            <span>💻 可将计时器安装到电脑桌面，像软件一样使用</span>
+            <button id="installBtn" style="padding:6px 14px;font-size:13px;background:#0cf;color:#000;border:none;border-radius:5px;cursor:pointer;font-weight:bold;">立即安装</button>
             <button id="dismissBtn" style="padding:6px 10px;font-size:12px;background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.3);border-radius:5px;cursor:pointer;">关闭</button>
         `;
         document.body.appendChild(banner);
@@ -1512,7 +1528,14 @@ function openFriends(){
             banner.remove();
         };
         document.getElementById('dismissBtn').onclick=()=>banner.remove();
-        setTimeout(()=>banner.remove(),10000);
+        setTimeout(()=>banner.remove(), force ? 30000 : 10000);
+    }
+
+    // 如果是从官网安装按钮过来的，但 beforeinstallprompt 没触发，也显示横幅
+    if(forceInstall){
+        setTimeout(()=>{
+            if(!deferredPrompt) showInstallBanner(true);
+        },2000);
     }
 
     // 检测 Windows 平台提示
