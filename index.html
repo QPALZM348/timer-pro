@@ -3251,7 +3251,7 @@ function checkUpdateNow(btn) {
   fetch('version.json?_t=' + Date.now(), {cache: 'no-store'})
     .then(function(r) { return r.json(); })
     .then(function(d) {
-      var cur = '2.2.3';
+      var cur = '2.2.6';
       var r = d.version.split('.').map(Number);
       var c = cur.split('.').map(Number);
       var newer = false;
