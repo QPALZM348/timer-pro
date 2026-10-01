@@ -3705,6 +3705,7 @@ function initVipFeatures(){
     <button class="tab-btn active" data-view="stopwatch">⏱ 正计时秒表</button>
     <button class="tab-btn" data-view="countdown">⏳ 倒计时闹钟</button>
     <button class="tab-btn" data-view="presets">📋 预设模板</button>
+    <button class="tab-btn" data-view="game">🎮 小游戏</button>
     <button class="tab-btn" data-view="setting">⚙️ 设置</button>
 </div>
 
@@ -3766,6 +3767,243 @@ function initVipFeatures(){
             <div id="customPresetList" style="margin-top:10px;"></div>
         </div>
     </div>
+
+<style>
+/* ===== 贪吃蛇小游戏 ===== */
+.snake-wrap{max-width:460px;margin:0 auto;text-align:center;}
+.snake-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:15px;color:#ccc;}
+.snake-header b{color:#00e5a0;font-size:20px;margin-left:6px;}
+.snake-stage{position:relative;width:100%;max-width:400px;margin:0 auto;aspect-ratio:1/1;}
+#snakeCanvas{width:100%;height:100%;display:block;background:#0b1020;border:2px solid rgba(0,229,160,0.35);border-radius:12px;touch-action:none;}
+.snake-mask{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(8,12,26,0.86);border-radius:12px;backdrop-filter:blur(3px);padding:20px;}
+.snake-mask.hidden{display:none;}
+.snake-mask .m-title{font-size:26px;font-weight:700;color:#00e5a0;}
+.snake-mask .m-sub{font-size:13px;color:#aab;line-height:1.7;}
+.snake-mask .m-score{font-size:18px;color:#ffd54a;}
+.snake-mask button{padding:11px 30px;font-size:16px;border:none;border-radius:24px;background:linear-gradient(135deg,#00d68f,#00b8d9);color:#04222b;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(0,214,143,.35);}
+.snake-mask button:active{transform:scale(.96);}
+.snake-toolbar{margin:14px auto 6px;display:flex;gap:10px;justify-content:center;}
+.snake-toolbar button{padding:8px 22px;font-size:14px;border-radius:20px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#eee;cursor:pointer;}
+.snake-toolbar button:active{transform:scale(.95);}
+/* 手机虚拟方向键 */
+.snake-dpad{margin:14px auto 0;width:168px;display:none;flex-direction:column;align-items:center;gap:6px;}
+.snake-dpad .dpad-row{display:flex;gap:6px;}
+.snake-dpad button{width:52px;height:52px;font-size:20px;border-radius:12px;border:1px solid rgba(0,229,160,.4);background:rgba(0,229,160,.12);color:#00e5a0;cursor:pointer;touch-action:manipulation;}
+.snake-dpad button:active{background:rgba(0,229,160,.35);}
+.snake-dpad .dpad-blank{width:52px;height:52px;visibility:hidden;}
+@media (hover:none) and (pointer:coarse){ .snake-dpad{display:flex;} }
+</style>
+
+<!-- 贪吃蛇视图 -->
+<div class="box" id="game">
+  <div class="snake-wrap">
+    <div class="snake-header">
+      <div class="snake-score">分数<b id="snakeScore">0</b></div>
+      <div class="snake-best">最高<b id="snakeBest">0</b></div>
+    </div>
+    <div class="snake-stage">
+      <canvas id="snakeCanvas" width="400" height="400"></canvas>
+      <div class="snake-mask" id="snakeStartMask">
+        <div class="m-title">🐍 贪吃蛇</div>
+        <div class="m-sub">电脑：方向键 / WASD 控制<br>手机：点下方方向键，或在画面上滑动</div>
+        <button id="snakeStartBtn">开始游戏</button>
+      </div>
+      <div class="snake-mask hidden" id="snakeOverMask">
+        <div class="m-title" id="snakeOverTitle">游戏结束</div>
+        <div class="m-score" id="snakeOverScore"></div>
+        <button id="snakeRestartBtn">再来一局</button>
+      </div>
+      <div class="snake-mask hidden" id="snakePauseMask">
+        <div class="m-title">⏸ 已暂停</div>
+        <button id="snakeResumeBtn">继续游戏</button>
+      </div>
+    </div>
+    <div class="snake-toolbar">
+      <button id="snakePauseBtn">暂停</button>
+      <button id="snakeResetBtn">重新开始</button>
+    </div>
+    <div class="snake-dpad">
+      <div class="dpad-row"><button data-dir="up" aria-label="上">▲</button></div>
+      <div class="dpad-row">
+        <button data-dir="left" aria-label="左">◀</button>
+        <button data-dir="down" aria-label="下">▼</button>
+        <button data-dir="right" aria-label="右">▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var canvas=document.getElementById('snakeCanvas');
+  if(!canvas) return;
+  var ctx=canvas.getContext('2d');
+  var N=20, CELL=canvas.width/N;          // 20x20 网格
+  var scoreEl=document.getElementById('snakeScore');
+  var bestEl=document.getElementById('snakeBest');
+  var startMask=document.getElementById('snakeStartMask');
+  var overMask=document.getElementById('snakeOverMask');
+  var pauseMask=document.getElementById('snakePauseMask');
+  var overScore=document.getElementById('snakeOverScore');
+  var overTitle=document.getElementById('snakeOverTitle');
+
+  var DIRS={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]};
+  var OPP={up:'down',down:'up',left:'right',right:'left'};
+  var snake,dir,dirQueue,food,score,best,speed,timer,state;
+
+  try{best=parseInt(localStorage.getItem('snakeBest')||'0',10)||0;}catch(e){best=0;}
+  bestEl.textContent=best;
+
+  // 高分屏适配
+  (function fitDPR(){
+    var dpr=window.devicePixelRatio||1;
+    var size=400;
+    canvas.width=size*dpr; canvas.height=size*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    CELL=size/N;
+  })();
+
+  function reset(){
+    snake=[{x:9,y:10},{x:8,y:10},{x:7,y:10}];
+    dir='right'; dirQueue=[]; score=0; speed=150;
+    scoreEl.textContent=0;
+    placeFood(); draw();
+  }
+  function placeFood(){
+    while(true){
+      var f={x:(Math.random()*N)|0,y:(Math.random()*N)|0};
+      if(!snake.some(function(s){return s.x===f.x&&s.y===f.y;})){food=f;return;}
+    }
+  }
+  function show(mask){[startMask,overMask,pauseMask].forEach(function(m){m.classList.add('hidden');});if(mask)mask.classList.remove('hidden');}
+
+  function start(){
+    reset(); state='running'; show(null);
+    clearTimeout(timer); loop();
+  }
+  function loop(){
+    clearTimeout(timer);
+    timer=setTimeout(function(){
+      // 切走标签 / 页面隐藏时自动暂停
+      var box=document.getElementById('game');
+      if(document.hidden||!box.classList.contains('active')){pause();return;}
+      step();
+      if(state==='running') loop();
+    },speed);
+  }
+  function step(){
+    while(dirQueue.length){
+      var nd=dirQueue.shift();
+      if(nd!==OPP[dir]&&nd!==dir){dir=nd;break;}
+    }
+    var d=DIRS[dir], head={x:snake[0].x+d[0],y:snake[0].y+d[1]};
+    // 撞墙
+    if(head.x<0||head.y<0||head.x>=N||head.y>=N){return gameOver('💥 撞墙了');}
+    // 撞自己（尾巴会移动，最后一节不算，除非吃到食物）
+    var eat=head.x===food.x&&head.y===food.y;
+    var body=eat?snake:snake.slice(0,-1);
+    if(body.some(function(s){return s.x===head.x&&s.y===head.y;})){return gameOver('🌀 咬到自己了');}
+    snake.unshift(head);
+    if(eat){
+      score+=10; scoreEl.textContent=score;
+      if(speed>70){speed-=4;}            // 逐渐加速
+      placeFood();
+    }else{snake.pop();}
+    draw();
+  }
+  function gameOver(t){
+    state='over'; clearTimeout(timer);
+    overTitle.textContent=t;
+    overScore.textContent='本局得分：'+score;
+    if(score>best){best=score;bestEl.textContent=best;try{localStorage.setItem('snakeBest',String(best));}catch(e){}}
+    show(overMask);
+  }
+  function pause(){
+    if(state!=='running')return;
+    state='paused'; clearTimeout(timer); show(pauseMask);
+  }
+  function resume(){
+    if(state!=='paused')return;
+    state='running'; show(null); loop();
+  }
+  function queueDir(nd){ if(state!=='running')return; if(dirQueue.length<3)dirQueue.push(nd); }
+
+  // 绘制
+  function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+  function draw(){
+    ctx.fillStyle='#0b1020'; ctx.fillRect(0,0,400,400);
+    // 网格
+    ctx.strokeStyle='rgba(255,255,255,0.035)';
+    for(var i=1;i<N;i++){ctx.beginPath();ctx.moveTo(i*CELL,0);ctx.lineTo(i*CELL,400);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*CELL);ctx.lineTo(400,i*CELL);ctx.stroke();}
+    // 食物
+    var fx=food.x*CELL,fy=food.y*CELL;
+    ctx.fillStyle='#ff4d6d';
+    ctx.beginPath();ctx.arc(fx+CELL/2,fy+CELL/2,CELL*0.36,0,Math.PI*2);ctx.fill();
+    // 蛇
+    for(var j=snake.length-1;j>=0;j--){
+      var s=snake[j],t=j/Math.max(snake.length-1,1);
+      if(j===0){ctx.fillStyle='#7CFFD0';}
+      else{var g=Math.round(229-t*90);ctx.fillStyle='rgb(0,'+g+',160)';}
+      var pad=1.5;
+      roundRect(s.x*CELL+pad,s.y*CELL+pad,CELL-pad*2,CELL-pad*2,5);ctx.fill();
+    }
+    // 蛇眼睛
+    var h0=snake[0],dd=DIRS[dir],cx=h0.x*CELL+CELL/2,cy=h0.y*CELL+CELL/2;
+    ctx.fillStyle='#062b22';
+    var ex2=dd[0]*3,ey2=dd[1]*3,px=dd[1]*4,py=dd[0]*4;
+    ctx.beginPath();ctx.arc(cx+ex2+px,cy+ey2+py,1.8,0,7);ctx.fill();
+    ctx.beginPath();ctx.arc(cx+ex2-px,cy+ey2-py,1.8,0,7);ctx.fill();
+  }
+
+  // 键盘
+  var KEYS={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',s:'down',a:'left',d:'right',W:'up',S:'down',A:'left',D:'right'};
+  document.addEventListener('keydown',function(e){
+    var k=KEYS[e.key];
+    if(k){
+      // 仅当游戏标签可见时响应，避免在其他页面拦截方向键
+      var box=document.getElementById('game');
+      if(box.classList.contains('active')){e.preventDefault();queueDir(k);}
+    }
+    if((e.key===' '||e.key==='Spacebar')&&document.getElementById('game').classList.contains('active')){
+      e.preventDefault();
+      if(state==='running')pause();else if(state==='paused')resume();
+    }
+  },{passive:false});
+
+  // 虚拟方向键
+  document.querySelectorAll('.snake-dpad button').forEach(function(b){
+    var handler=function(e){e.preventDefault();queueDir(b.dataset.dir);};
+    b.addEventListener('touchstart',handler,{passive:false});
+    b.addEventListener('mousedown',handler);
+  });
+
+  // 画面滑动手势
+  var tsX=0,tsY=0;
+  canvas.addEventListener('touchstart',function(e){var t=e.touches[0];tsX=t.clientX;tsY=t.clientY;},{passive:true});
+  canvas.addEventListener('touchend',function(e){
+    var t=e.changedTouches[0],dx=t.clientX-tsX,dy=t.clientY-tsY;
+    if(Math.abs(dx)<18&&Math.abs(dy)<18)return;
+    if(Math.abs(dx)>Math.abs(dy))queueDir(dx>0?'right':'left');
+    else queueDir(dy>0?'down':'up');
+  },{passive:true});
+
+  // 按钮
+  document.getElementById('snakeStartBtn').addEventListener('click',start);
+  document.getElementById('snakeRestartBtn').addEventListener('click',start);
+  document.getElementById('snakeResetBtn').addEventListener('click',function(){start();});
+  document.getElementById('snakePauseBtn').addEventListener('click',function(){
+    if(state==='running')pause();else if(state==='paused')resume();
+    this.textContent=state==='paused'?'继续':'暂停';
+  });
+  document.getElementById('snakeResumeBtn').addEventListener('click',function(){
+    resume();
+    document.getElementById('snakePauseBtn').textContent='暂停';
+  });
+
+  reset();
+})();
+</script>
+
 
     <!-- 设置页 -->
     <div class="box" id="setting">
