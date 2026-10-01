@@ -2557,12 +2557,16 @@ function openFriends(){
             showToast('已解锁全部背景音乐！');
         } else if(item.type === 'vip'){
             const days = parseInt(item.value,10) || 30;
+            const user = getUserData();
+            // 已在有效期内则顺延，否则从现在起算
+            const base = (checkVipValid(user) && user.vipExpireTime) ? new Date(user.vipExpireTime) : new Date();
+            base.setDate(base.getDate()+days);
+            user.isVip = true;
+            user.vipExpireTime = base.getTime();   // 毫秒时间戳
+            saveUserData(user);
             localStorage.setItem('vipStatus','1');
             localStorage.setItem('isVip','1');
-            const exp = new Date(Date.now() + days*86400000);
-            const exs = exp.getFullYear()+'-'+String(exp.getMonth()+1).padStart(2,'0')+'-'+String(exp.getDate()).padStart(2,'0');
-            localStorage.setItem('vipExpireTime', exs);
-            if(typeof updateUserUI === 'function'){ try{updateUserUI();}catch(e){} }
+            try{ refreshUserUI(); updateVipLocks(); }catch(e){}
             showToast('👑 已开通VIP '+days+' 天，全部特权已解锁！');
         }
     }
