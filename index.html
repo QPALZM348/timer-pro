@@ -2445,6 +2445,11 @@ function openFriends(){
         {id:'title_king', emoji:'👑', name:'王者称号', desc:'获得"计时王者"称号', price:500, type:'title', value:'计时王者'},
         {id:'frame_gold', emoji:'✨', name:'金色头像框', desc:'闪耀金色头像边框', price:200, type:'frame', value:'gold'},
         {id:'frame_diamond', emoji:'💎', name:'钻石头像框', desc:'璀璨钻石头像边框', price:400, type:'frame', value:'diamond'},
+        // ===== VIP 专属皮肤（可用积分兑换）=====
+        {id:'theme_golddragon', emoji:'🐲', name:'金龙传说皮肤 [VIP]', desc:'黑金烫金·尊贵流动龙纹', price:300, type:'theme', value:'golddragon'},
+        {id:'theme_diamondstar', emoji:'💠', name:'钻石星辰皮肤 [VIP]', desc:'冰蓝紫钻·璀璨星光', price:400, type:'theme', value:'diamondstar'},
+        {id:'theme_galaxy', emoji:'🌌', name:'银河至尊皮肤 [VIP]', desc:'深邃银河·紫电流光', price:500, type:'theme', value:'galaxy'},
+        {id:'vip_30d', emoji:'👑', name:'兑换VIP会员(30天)', desc:'立即开通30天VIP，享全部特权', price:600, type:'vip', value:'30'},
         {id:'bgm_unlock', emoji:'🎵', name:'解锁全部音乐', desc:'解锁所有VIP背景音乐', price:1000, type:'bgm', value:'all'},
     ];
 
@@ -2476,7 +2481,9 @@ function openFriends(){
                 <div style="text-align:right;">
                     <div style="color:#ffd700;font-size:14px;font-weight:bold;margin-bottom:6px;">${item.price} 积分</div>
                     ${owned 
-                        ? '<span style="color:#4ade80;font-size:12px;">已拥有</span>' 
+                        ? (item.type==='theme'
+                            ? `<button onclick="equipItem('${item.id}')" style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;">装备</button>`
+                            : '<span style="color:#4ade80;font-size:12px;">已拥有</span>')
                         : `<button onclick="buyItem('${item.id}')" style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;background:${canAfford?'linear-gradient(135deg,#6a11cb,#2575fc)':'#555'};color:#fff;${canAfford?'':'opacity:0.5;cursor:not-allowed;'}" ${canAfford?'':'disabled'}>兑换</button>`
                     }
                 </div>
@@ -2499,6 +2506,13 @@ function openFriends(){
         renderShop();
     }
     window.buyItem = buyItem;
+    function equipItem(id){
+        const item = SHOP_ITEMS.find(i=>i.id===id);
+        if(!item) return;
+        applyShopItem(item);
+        showToast('🎨 已装备：'+item.name);
+    }
+    window.equipItem = equipItem;
 
     function applyShopItem(item){
         if(item.type === 'theme'){
@@ -2508,7 +2522,10 @@ function openFriends(){
                 ocean: 'linear-gradient(-45deg, #2E3192, #1BFFFF)',
                 sunset: 'linear-gradient(-45deg, #f12711, #f5af19)',
                 forest: 'linear-gradient(-45deg, #134E5E, #71B280)',
-                night: 'linear-gradient(-45deg, #0f0c29, #302b63, #24243e)'
+                night: 'linear-gradient(-45deg, #0f0c29, #302b63, #24243e)',
+                golddragon: 'linear-gradient(-45deg, #14141f, #b8860b, #ffd700, #7a5c00, #1a1a2e)',
+                diamondstar: 'linear-gradient(-45deg, #0f2027, #2c5364, #7de6e0, #b490ca, #1a2a6c)',
+                galaxy: 'linear-gradient(-45deg, #000428, #004e92, #7f00ff, #e100ff, #240b36)'
             };
             if(themes[item.value]){
                 document.body.style.background = themes[item.value];
@@ -2520,6 +2537,15 @@ function openFriends(){
         } else if(item.type === 'bgm'){
             localStorage.setItem('unlockAllMusic', '1');
             showToast('已解锁全部背景音乐！');
+        } else if(item.type === 'vip'){
+            const days = parseInt(item.value,10) || 30;
+            localStorage.setItem('vipStatus','1');
+            localStorage.setItem('isVip','1');
+            const exp = new Date(Date.now() + days*86400000);
+            const exs = exp.getFullYear()+'-'+String(exp.getMonth()+1).padStart(2,'0')+'-'+String(exp.getDate()).padStart(2,'0');
+            localStorage.setItem('vipExpireTime', exs);
+            if(typeof updateUserUI === 'function'){ try{updateUserUI();}catch(e){} }
+            showToast('👑 已开通VIP '+days+' 天，全部特权已解锁！');
         }
     }
 
@@ -2602,7 +2628,10 @@ function openFriends(){
                 ocean: 'linear-gradient(-45deg, #2E3192, #1BFFFF)',
                 sunset: 'linear-gradient(-45deg, #f12711, #f5af19)',
                 forest: 'linear-gradient(-45deg, #134E5E, #71B280)',
-                night: 'linear-gradient(-45deg, #0f0c29, #302b63, #24243e)'
+                night: 'linear-gradient(-45deg, #0f0c29, #302b63, #24243e)',
+                golddragon: 'linear-gradient(-45deg, #14141f, #b8860b, #ffd700, #7a5c00, #1a1a2e)',
+                diamondstar: 'linear-gradient(-45deg, #0f2027, #2c5364, #7de6e0, #b490ca, #1a2a6c)',
+                galaxy: 'linear-gradient(-45deg, #000428, #004e92, #7f00ff, #e100ff, #240b36)'
             };
             if(themes[savedTheme]){
                 document.body.style.background = themes[savedTheme];
