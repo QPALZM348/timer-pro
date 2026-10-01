@@ -750,6 +750,24 @@ body.fullscreen-mode .fs-exit-float{display:flex;}
 .friend-item{cursor:pointer;transition:.2s;}
 .friend-item:hover{background:rgba(255,255,255,0.05);}
 </style>
+<script>
+/* 全局轻提示（修复商城/签到/好友等处的提示调用）*/
+function showToast(msg){
+  try{
+    var box=document.getElementById('__globalToast');
+    if(!box){
+      box=document.createElement('div');box.id='__globalToast';
+      box.style.cssText='position:fixed;top:24px;left:50%;transform:translateX(-50%);background:rgba(18,18,28,0.94);color:#fff;padding:12px 22px;border-radius:12px;font-size:15px;z-index:99999;box-shadow:0 8px 28px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.18);max-width:86%;text-align:center;pointer-events:none;opacity:0;transition:opacity .25s,transform .25s;';
+      document.body?document.body.appendChild(box):document.documentElement.appendChild(box);
+    }
+    box.textContent=(msg===undefined||msg===null)?'':String(msg);
+    box.style.opacity='1';box.style.transform='translateX(-50%) translateY(0)';
+    clearTimeout(box.__t);
+    box.__t=setTimeout(function(){box.style.opacity='0';box.style.transform='translateX(-50%) translateY(-12px)';},1800);
+  }catch(e){}
+}
+window.showToast=showToast;
+</script>
 </head>
 <body>
 <script>
