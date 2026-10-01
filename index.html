@@ -3865,7 +3865,7 @@ function initVipFeatures(){
 
   function reset(){
     snake=[{x:9,y:10},{x:8,y:10},{x:7,y:10}];
-    dir='right'; dirQueue=[]; score=0; speed=150;
+    dir='right'; dirQueue=[]; score=0; speed=(matchMedia('(hover:none) and (pointer:coarse)').matches?230:200);
     scoreEl.textContent=0;
     placeFood(); draw();
   }
@@ -3906,7 +3906,7 @@ function initVipFeatures(){
     snake.unshift(head);
     if(eat){
       score+=10; scoreEl.textContent=score;
-      if(speed>70){speed-=4;}            // 逐渐加速
+      if(speed>130){speed-=2;}           // 缓慢加速，不会太快
       placeFood();
     }else{snake.pop();}
     draw();
