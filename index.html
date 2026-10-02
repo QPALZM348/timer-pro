@@ -2513,14 +2513,17 @@ function openFriends(){
     function buyItem(id){
         const item = SHOP_ITEMS.find(i=>i.id===id);
         if(!item) return;
-        if(isPurchased(id)){ showToast('你已经拥有这个物品了'); return; }
+        const isVipCard = item.type === 'vip';
+        // VIP时长卡可重复购买（续费叠加）；其余物品已拥有则拦截
+        if(!isVipCard && isPurchased(id)){ showToast('你已经拥有这个物品了'); return; }
         if(!spendPoints(item.price)){ showToast('积分不足，继续努力吧！'); return; }
-        const purchased = getPurchasedItems();
-        purchased.push(id);
-        savePurchasedItems(purchased);
-        // 应用效果
+        if(!isVipCard){
+            const purchased = getPurchasedItems();
+            purchased.push(id);
+            savePurchasedItems(purchased);
+        }
         applyShopItem(item);
-        showToast(`🎉 成功兑换：${item.name}`);
+        showToast(isVipCard ? ('👑 VIP已延长 '+(item.value||'')+' 天') : ('🎉 成功兑换：'+item.name));
         renderShop();
     }
     window.buyItem = buyItem;
@@ -3343,6 +3346,18 @@ function initVipFeatures(){
 
     // 初始化执行
     initSkinLoad();
+    // 自愈：修复早期版本兑换VIP只写标志、未激活用户对象的脏数据（积分已扣，免费补回30天）
+    try{
+        const __purch = JSON.parse(localStorage.getItem('purchasedItems')||'[]');
+        const __u = getUserData();
+        if(__purch.indexOf('vip_30d')>=0 && !checkVipValid(__u)){
+            const __b = new Date(); __b.setDate(__b.getDate()+30);
+            __u.isVip = true; __u.vipExpireTime = __b.getTime();
+            saveUserData(__u);
+            localStorage.setItem('vipStatus','1');
+            localStorage.setItem('isVip','1');
+        }
+    }catch(e){}
     refreshUserUI();
     renderPlans();
     renderPresets();
