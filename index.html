@@ -413,6 +413,13 @@ body.fullscreen-mode .fs-exit-float{display:flex;}
   animation:legendHue 3s linear infinite;}
 .svip-sw{display:flex;align-items:center;gap:9px;font-size:14px;color:#eee;padding:9px 4px;cursor:pointer;}
 .svip-sw input{width:17px;height:17px;accent-color:#b14dff;}
+body.svip-eff-name #topUserName{background:linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b,#ff006e);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:legendHue 3s linear infinite;font-weight:bold;}
+body.svip-eff-btn .settings-btn,body.svip-eff-btn .tab-btn{animation:svipBtnBorder 3s linear infinite;}
+@keyframes svipBtnBorder{0%{border-color:#ff006e;box-shadow:0 0 8px rgba(255,0,110,.35)}25%{border-color:#8338ec;box-shadow:0 0 8px rgba(131,56,236,.35)}50%{border-color:#06ffa5;box-shadow:0 0 8px rgba(6,255,165,.35)}75%{border-color:#ffbe0b;box-shadow:0 0 8px rgba(255,190,11,.35)}100%{border-color:#ff006e;box-shadow:0 0 8px rgba(255,0,110,.35)}}
+#svipStarCanvas{position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:5;display:none;}
+body.svip-eff-particle #svipStarCanvas{display:block;}
+.svip-click-ripple{position:fixed;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);border:2px solid #ff5ce6;animation:svipRipple .6s ease-out forwards;}
+@keyframes svipRipple{0%{width:8px;height:8px;opacity:.9}100%{width:90px;height:90px;opacity:0}}
 
 .shop-zone{border-radius:14px;padding:14px;margin-bottom:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,.09);}
 .shop-zone-title{font-size:15px;font-weight:bold;color:#ffd700;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.12);}
@@ -1438,6 +1445,9 @@ function openFriends(){
         }
         document.body.classList.toggle('is-svip',checkSvipValid(user));
         document.body.classList.toggle('svip-eff-time',checkSvipValid(user)&&localStorage.getItem('svipEff:time')!=='0');
+        document.body.classList.toggle('svip-eff-name',checkSvipValid(user)&&localStorage.getItem('svipEff:name')!=='0');
+        document.body.classList.toggle('svip-eff-btn',checkSvipValid(user)&&localStorage.getItem('svipEff:btn')!=='0');
+        document.body.classList.toggle('svip-eff-particle',checkSvipValid(user)&&localStorage.getItem('svipEff:particle')!=='0');
         renderSkin();
         updateVipLocks();
         renderTitleFrame();
@@ -4585,6 +4595,10 @@ function initVipFeatures(){
                 <label class="svip-sw"><input type="checkbox" id="svipEffTime" checked> 🔢 计时数字五彩流光</label>
                 <label class="svip-sw"><input type="checkbox" id="svipEffSnake" checked> 🐍 贪吃蛇彩虹星光拖尾</label>
                 <label class="svip-sw"><input type="checkbox" id="svipEffBadge" checked> 💠 SVIP 炫彩徽章</label>
+                <label class="svip-sw"><input type="checkbox" id="svipEffName" checked> ✨ 用户名炫彩流光</label>
+                <label class="svip-sw"><input type="checkbox" id="svipEffBtn" checked> 🌈 全局按钮炫彩描边</label>
+                <label class="svip-sw"><input type="checkbox" id="svipEffParticle" checked> 💫 背景星光粒子</label>
+                <label class="svip-sw"><input type="checkbox" id="svipEffClick" checked> 🎆 点击光环跟随</label>
               </div>
               <script>
               (function(){
@@ -4595,9 +4609,9 @@ function initVipFeatures(){
                     localStorage.setItem(key,el.checked?'1':'0');
                     var u={};try{u=JSON.parse(localStorage.getItem('timerUser')||'{}');}catch(e){}
                     var svipNow2=!!u.svip&&(u.svipExpireTime||0)>Date.now();
-                    if(key==='svipEff:time'){
-                      document.body.classList.toggle('svip-eff-time',svipNow2&&el.checked);
-                    }else if(key==='svipEff:badge'){
+                    var classMap={'svipEff:time':'svip-eff-time','svipEff:name':'svip-eff-name','svipEff:btn':'svip-eff-btn','svipEff:particle':'svip-eff-particle'};
+                    if(classMap[key])document.body.classList.toggle(classMap[key],svipNow2&&el.checked);
+                    else if(key==='svipEff:badge'){
                       var bdg=document.getElementById('topSvipBadge');
                       if(bdg)bdg.classList.toggle('hidden',!(svipNow2&&el.checked));
                     }
@@ -4606,6 +4620,36 @@ function initVipFeatures(){
                 bind('svipEffTime','svipEff:time');
                 bind('svipEffSnake','svipEff:snake');
                 bind('svipEffBadge','svipEff:badge');
+              })();
+              </script>
+              <script>
+              (function(){
+                var c=document.createElement('canvas');c.id='svipStarCanvas';document.body.appendChild(c);
+                var x=c.getContext('2d'),stars=[];
+                function resize(){c.width=innerWidth;c.height=innerHeight;}
+                resize();addEventListener('resize',resize);
+                for(var i=0;i<60;i++)stars.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.6+.4,dx:(Math.random()-.5)*.35,dy:(Math.random()-.5)*.35,h:Math.random()*360});
+                function loop(){
+                  if(getComputedStyle(c).display!=='none'){
+                    x.clearRect(0,0,c.width,c.height);
+                    stars.forEach(function(s){
+                      s.x+=s.dx;s.y+=s.dy;
+                      if(s.x<0)s.x=c.width;if(s.x>c.width)s.x=0;if(s.y<0)s.y=c.height;if(s.y>c.height)s.y=0;
+                      var hue=(s.h+Date.now()/30)%360;
+                      x.fillStyle='hsl('+hue+',90%,70%)';x.shadowBlur=6;x.shadowColor=x.fillStyle;
+                      x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill();
+                    });x.shadowBlur=0;
+                  }
+                  requestAnimationFrame(loop);
+                }
+                requestAnimationFrame(loop);
+                document.addEventListener('click',function(e){
+                  var u={};try{u=JSON.parse(localStorage.getItem('timerUser')||'{}');}catch(ex){}
+                  if(!(u.svip&&(u.svipExpireTime||0)>Date.now()&&localStorage.getItem('svipEff:click')!=='0'))return;
+                  var d=document.createElement('div');d.className='svip-click-ripple';
+                  d.style.left=e.clientX+'px';d.style.top=e.clientY+'px';
+                  document.body.appendChild(d);setTimeout(function(){d.remove();},650);
+                });
               })();
               </script>
             </div>
