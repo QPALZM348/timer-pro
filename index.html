@@ -405,6 +405,10 @@ body.fullscreen-mode .fs-exit-float{display:flex;}
 .set-placeholder{text-align:center;color:#9aa;font-size:14px;padding:42px 16px;border:1px dashed var(--border-color);border-radius:12px;margin-bottom:16px;}
 .set-panel{margin-bottom:16px;}
 
+.shop-zone{border-radius:14px;padding:14px;margin-bottom:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,.09);}
+.shop-zone-title{font-size:15px;font-weight:bold;color:#ffd700;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.12);}
+.shop-zone-title.svip-zone-title{background:linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:legendHue 3s linear infinite;border-bottom:1px solid rgba(131,56,236,.4);}
+
 /* 导出弹窗 */
 .export-modal{width:90%;max-width:600px;}
 .export-textarea{
@@ -2592,7 +2596,8 @@ function openFriends(){
         if(!list) return;
         const points = getPoints();
         const purchased = getPurchasedItems();
-        list.innerHTML = SHOP_ITEMS.map(item=>{
+
+        function itemCard(item){
             const owned = purchased.indexOf(item.id) >= 0;
             const canAfford = points >= item.price;
             return `<div style="display:flex;align-items:center;padding:12px;margin-bottom:10px;background:rgba(255,255,255,0.05);border-radius:10px;border:1px solid ${owned?'#4ade80':'rgba(255,255,255,0.1)'};">
@@ -2603,7 +2608,7 @@ function openFriends(){
                 </div>
                 <div style="text-align:right;">
                     <div style="color:#ffd700;font-size:14px;font-weight:bold;margin-bottom:6px;">${item.price} 积分</div>
-                    ${owned 
+                    ${owned
                         ? (item.type==='theme'
                             ? `<button onclick="equipItem('${item.id}')" style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;">装备</button>`
                             : '<span style="color:#4ade80;font-size:12px;">已拥有</span>')
@@ -2611,7 +2616,25 @@ function openFriends(){
                     }
                 </div>
             </div>`;
-        }).join('');
+        }
+        function section(icon,title,items,titleClass,wrapStyle){
+            if(!items.length)return '';
+            return `<div class="shop-zone" style="${wrapStyle||''}">
+                <div class="shop-zone-title ${titleClass||''}">${icon} ${title}</div>
+                ${items.map(itemCard).join('')}
+            </div>`;
+        }
+        const isSvip=i=>i.type==='svip'||i.name.indexOf('[SVIP]')>=0;
+        const isVip=i=>i.type==='vip'||i.name.indexOf('[VIP]')>=0;
+        const normal=SHOP_ITEMS.filter(i=>!isSvip(i)&&!isVip(i));
+        const vipItems=SHOP_ITEMS.filter(i=>isVip(i));
+        const svipItems=SHOP_ITEMS.filter(i=>isSvip(i));
+
+        list.innerHTML =
+            section('🎁','普通商品',normal)
+            + section('👑','VIP 专属 · 开通 VIP 即可兑换',vipItems)
+            + section('💠','SVIP 专属专区 · 须先开 VIP 再升级 SVIP',svipItems,'svip-zone-title',
+                'border:1.5px solid transparent;background:linear-gradient(#140528,#1c0636) padding-box,linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b) border-box;box-shadow:0 0 22px rgba(131,56,236,.45);');
         updatePointsUI();
     }
 
