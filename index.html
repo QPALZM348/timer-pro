@@ -154,7 +154,7 @@ button:disabled{opacity:0.4;cursor:not-allowed;}
 .title-badge.t-king{background:linear-gradient(135deg,#ff512f,#b1047e);color:#fff;}
 .title-badge.t-legend{background:linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b);background-size:300% 100%;color:#fff;animation:legendHue 3s linear infinite;box-shadow:0 0 10px rgba(131,56,236,.6);}
 @keyframes legendHue{to{background-position:300% 0;}}
-body.is-svip #time{background:linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b,#ff006e);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:svipTextFlow 4s linear infinite;filter:drop-shadow(0 0 14px rgba(131,56,236,.65));}
+body.is-svip.svip-eff-time #time{background:linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b,#ff006e);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:svipTextFlow 4s linear infinite;filter:drop-shadow(0 0 14px rgba(131,56,236,.65));}
 @keyframes svipTextFlow{to{background-position:300% 0;}}
 
 .setting-container{width:100%;text-align:left;}
@@ -404,6 +404,15 @@ body.fullscreen-mode .fs-exit-float{display:flex;}
 .set-subtab.active{background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(106,17,203,.4);}
 .set-placeholder{text-align:center;color:#9aa;font-size:14px;padding:42px 16px;border:1px dashed var(--border-color);border-radius:12px;margin-bottom:16px;}
 .set-panel{margin-bottom:16px;}
+.svip-set-area{margin-top:16px;border-radius:14px;padding:14px;border:1.5px solid transparent;
+  background:linear-gradient(#140528,#1c0636) padding-box,linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b) border-box;
+  box-shadow:0 0 20px rgba(131,56,236,.4);}
+.svip-set-title{font-size:15px;font-weight:bold;margin-bottom:12px;
+  background:linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b);background-size:300% 100%;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  animation:legendHue 3s linear infinite;}
+.svip-sw{display:flex;align-items:center;gap:9px;font-size:14px;color:#eee;padding:9px 4px;cursor:pointer;}
+.svip-sw input{width:17px;height:17px;accent-color:#b14dff;}
 
 .shop-zone{border-radius:14px;padding:14px;margin-bottom:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,.09);}
 .shop-zone-title{font-size:15px;font-weight:bold;color:#ffd700;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.12);}
@@ -1406,7 +1415,7 @@ function openFriends(){
                 vipStatus.textContent='SVIP会员';
                 vipStatus.style.color='#ffd700';
                 vipExpire.textContent=new Date(user.svipExpireTime).toLocaleString();
-                if(topSvipBadge)topSvipBadge.classList.remove('hidden');
+                if(topSvipBadge)topSvipBadge.classList.toggle('hidden',localStorage.getItem('svipEff:badge')==='0');
                 topVipBadge.classList.add('hidden');
             }else if(vipValid){
                 vipStatus.textContent='VIP会员';
@@ -1428,6 +1437,7 @@ function openFriends(){
             userTopWrap.classList.add('hidden');
         }
         document.body.classList.toggle('is-svip',checkSvipValid(user));
+        document.body.classList.toggle('svip-eff-time',checkSvipValid(user)&&localStorage.getItem('svipEff:time')!=='0');
         renderSkin();
         updateVipLocks();
         renderTitleFrame();
@@ -4195,7 +4205,7 @@ function initVipFeatures(){
     ctx.fillStyle='#ff4d6d';
     ctx.beginPath();ctx.arc(fx+CELL/2,fy+CELL/2,CELL*0.36,0,Math.PI*2);ctx.fill();
     // SVIP 星光拖尾
-    var svipNow=(function(){try{var u=JSON.parse(localStorage.getItem('timerUser')||'{}');return !!u.svip&&(u.svipExpireTime||0)>Date.now();}catch(e){return false;}})();
+    var svipNow=(function(){try{var u=JSON.parse(localStorage.getItem('timerUser')||'{}');return !!u.svip&&(u.svipExpireTime||0)>Date.now()&&localStorage.getItem('svipEff:snake')!=='0';}catch(e){return false;}})();
     // 蛇
     if(svipNow)ctx.shadowBlur=14;
     for(var j=snake.length-1;j>=0;j--){
@@ -4570,6 +4580,31 @@ function initVipFeatures(){
                                                 <span class="btn-desc">加入房间，多人同步同一计时器</span>
                                             </button>
               </div>
+              <div class="svip-set-area">
+                <div class="svip-set-title">💠 SVIP 专属设置（独立特效，可自由开关）</div>
+                <label class="svip-sw"><input type="checkbox" id="svipEffTime" checked> 🔢 计时数字五彩流光</label>
+                <label class="svip-sw"><input type="checkbox" id="svipEffSnake" checked> 🐍 贪吃蛇彩虹星光拖尾</label>
+                <label class="svip-sw"><input type="checkbox" id="svipEffBadge" checked> 💠 SVIP 炫彩徽章</label>
+              </div>
+              <script>
+              (function(){
+                function bind(id,key){
+                  var el=document.getElementById(id);if(!el)return;
+                  el.checked=localStorage.getItem(key)!=='0';
+                  el.addEventListener('change',function(){
+                    localStorage.setItem(key,el.checked?'1':'0');
+                    if(key==='svipEff:time'){
+                      var u={};try{u=JSON.parse(localStorage.getItem('timerUser')||'{}');}catch(e){}
+                      var on=el.checked&&!!u.svip&&(u.svipExpireTime||0)>Date.now();
+                      document.body.classList.toggle('svip-eff-time',on);
+                    }
+                  });
+                }
+                bind('svipEffTime','svipEff:time');
+                bind('svipEffSnake','svipEff:snake');
+                bind('svipEffBadge','svipEff:badge');
+              })();
+              </script>
             </div>
             <div class="set-panel hidden" data-set="help">
               <div class="set-group">
