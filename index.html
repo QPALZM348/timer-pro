@@ -420,6 +420,17 @@ body.svip-eff-btn .settings-btn,body.svip-eff-btn .tab-btn{animation:svipBtnBord
 body.svip-eff-particle #svipStarCanvas{display:block;}
 .svip-click-ripple{position:fixed;border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);border:2px solid #ff5ce6;animation:svipRipple .6s ease-out forwards;}
 @keyframes svipRipple{0%{width:8px;height:8px;opacity:.9}100%{width:90px;height:90px;opacity:0}}
+.svip-stage-box{background:rgba(0,0,0,.25);border-radius:12px;padding:13px;margin-bottom:14px;border:1px solid rgba(131,56,236,.4);}
+.svip-stage-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;flex-wrap:wrap;gap:4px;}
+#svipStageCur{font-size:17px;font-weight:bold;color:#ffd700;}
+.svip-stage-tip{font-size:11px;color:#a78bfa;}
+.svip-stage-track{height:9px;border-radius:5px;background:rgba(255,255,255,.1);overflow:hidden;}
+.svip-stage-fill{height:100%;width:0;border-radius:5px;background:linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b);background-size:200% 100%;animation:legendHue 2s linear infinite;transition:width .4s;}
+.svip-stage-hint{font-size:12px;color:#bbb;margin:9px 0 11px;min-height:15px;}
+#svipUpgradeBtn{width:100%;padding:10px;border:none;border-radius:9px;cursor:pointer;font-size:14px;font-weight:bold;color:#fff;background:linear-gradient(135deg,#7f00ff,#e100ff);box-shadow:0 4px 12px rgba(127,0,255,.4);}
+#svipUpgradeBtn:disabled{opacity:.5;cursor:not-allowed;}
+.svip-badge.svip-max{background:linear-gradient(90deg,#ffd700,#ff5ce6,#ffd700);background-size:200% 100%;animation:svipMaxShine 1.5s linear infinite;color:#1a0033;}
+@keyframes svipMaxShine{to{background-position:200% 0;}}
 
 .shop-zone{border-radius:14px;padding:14px;margin-bottom:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,.09);}
 .shop-zone-title{font-size:15px;font-weight:bold;color:#ffd700;margin-bottom:12px;padding-bottom:9px;border-bottom:1px solid rgba(255,255,255,.12);}
@@ -1368,7 +1379,7 @@ function openFriends(){
         else now.setMonth(now.getMonth()+item.months);
         const ts=now.getTime();
         if(currentTier==='svip'){
-            user.svip=true;user.svipExpireTime=ts;
+            user.svip=true;user.svipExpireTime=ts;if(!user.svipLevel||user.svipLevel<1)user.svipLevel=1;
             if(!checkVipValid(user)||(user.vipExpireTime||0)<ts){user.isVip=true;user.vipExpireTime=ts;}
         }else{
             user.isVip=true;user.vipExpireTime=ts;
@@ -1419,10 +1430,10 @@ function openFriends(){
             const svipValid=checkSvipValid(user);
             const vipValid=checkVipValid(user);
             if(svipValid){
-                vipStatus.textContent='SVIP会员';
+                vipStatus.textContent='SVIP.'+(user.svipLevel||1)+' 会员';
                 vipStatus.style.color='#ffd700';
                 vipExpire.textContent=new Date(user.svipExpireTime).toLocaleString();
-                if(topSvipBadge)topSvipBadge.classList.toggle('hidden',localStorage.getItem('svipEff:badge')==='0');
+                if(topSvipBadge){topSvipBadge.classList.toggle('hidden',localStorage.getItem('svipEff:badge')==='0');var __lv=user.svipLevel||1;topSvipBadge.textContent='SVIP.'+__lv;topSvipBadge.classList.toggle('svip-max',__lv>=10);}
                 topVipBadge.classList.add('hidden');
             }else if(vipValid){
                 vipStatus.textContent='VIP会员';
@@ -1451,6 +1462,7 @@ function openFriends(){
         renderSkin();
         updateVipLocks();
         renderTitleFrame();
+        renderSvipStage();
     }
 
     // ============ VIP 锁状态更新 ============
@@ -1597,7 +1609,7 @@ function openFriends(){
             if(!u.account){ alert('请先登录或注册账号，再使用激活码'); return; }
             const FOREVER = new Date('2099-12-31T23:59:59').getTime();
             if(SVIP_CODES.includes(up)){
-                u.svip=true;u.svipExpireTime=FOREVER;u.isVip=true;u.vipExpireTime=FOREVER;saveUserData(u);
+                u.svip=true;u.svipExpireTime=FOREVER;u.isVip=true;u.vipExpireTime=FOREVER;if(!u.svipLevel||u.svipLevel<1)u.svipLevel=1;saveUserData(u);
                 localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');
                 refreshUserUI();updateVipLocks();
                 alert('💠 SVIP激活成功！凌驾VIP的全部特权已解锁');
@@ -1639,7 +1651,7 @@ function openFriends(){
             else {alert('激活码无效，请检查后重试');return;}
         }
         function grantLevel(obj){
-            if(vipLevel===2){obj.svip=true;obj.svipExpireTime=AC_FOREVER;obj.isVip=true;obj.vipExpireTime=AC_FOREVER;}
+            if(vipLevel===2){obj.svip=true;obj.svipExpireTime=AC_FOREVER;obj.isVip=true;obj.vipExpireTime=AC_FOREVER;if(!obj.svipLevel||obj.svipLevel<1)obj.svipLevel=1;}
             else if(vipLevel===1){obj.isVip=true;obj.vipExpireTime=AC_FOREVER;}
             return obj;
         }
@@ -2704,6 +2716,37 @@ function openFriends(){
     }
     window.equipItem = equipItem;
 
+    const SVIP_UP_COST=[0,200,400,600,800,1000,1300,1600,2000,2500];
+    function renderSvipStage(){
+      var u=getUserData();var cur=document.getElementById('svipStageCur');
+      if(!cur)return;
+      var valid=checkSvipValid(u);var lv=valid?(u.svipLevel||1):0;
+      var fill=document.getElementById('svipStageFill'),hint=document.getElementById('svipStageHint'),btn=document.getElementById('svipUpgradeBtn');
+      if(!valid){
+        cur.textContent='未开通 SVIP';cur.style.color='#888';fill.style.width='0';
+        hint.textContent='先开通 SVIP，即可从 1 阶段开始成长';btn.disabled=true;return;
+      }
+      cur.textContent='SVIP.'+lv+' 会员';cur.style.color='#ffd700';fill.style.width=(lv*10)+'%';
+      if(lv>=10){hint.textContent='🏆 已达 SVIP 满级 10，尊享全部最强特效';btn.disabled=true;}
+      else{hint.textContent='升到 SVIP.'+(lv+1)+' 需消耗 '+SVIP_UP_COST[lv]+' 积分（特效随阶段增强）';btn.disabled=false;}
+    }
+    function svipUpgrade(){
+      var u=getUserData();
+      if(!u.account)return showToast('请先登录');
+      if(!checkSvipValid(u))return showToast('请先开通 SVIP');
+      var lv=u.svipLevel||1;
+      if(lv>=10)return showToast('已达 SVIP 满级 10');
+      var cost=SVIP_UP_COST[lv];
+      if(getPoints()<cost)return showToast('积分不足，需要 '+cost+' 积分');
+      spendPoints(cost);u.svipLevel=lv+1;saveUserData(u);
+      showToast('🎉 已提升至 SVIP.'+(lv+1));
+      try{refreshUserUI();}catch(e){}
+      renderSvipStage();
+    }
+    window.svipUpgrade=svipUpgrade;
+    var __svipUpBtn=document.getElementById('svipUpgradeBtn');
+    if(__svipUpBtn)__svipUpBtn.onclick=svipUpgrade;
+
     function applyShopItem(item){
         if(item.type === 'theme'){
             // 应用主题
@@ -2753,7 +2796,7 @@ function openFriends(){
             const su = getUserData();
             const sbase = (checkSvipValid(su)&&su.svipExpireTime) ? new Date(su.svipExpireTime) : new Date();
             sbase.setDate(sbase.getDate()+sdays);
-            su.svip = true; su.svipExpireTime = sbase.getTime();
+            su.svip = true; su.svipExpireTime = sbase.getTime();if(!su.svipLevel||su.svipLevel<1)su.svipLevel=1;
             // SVIP 期内同步覆盖 VIP 权益
             if(!checkVipValid(su) || (su.vipExpireTime||0) < su.svipExpireTime){ su.isVip=true; su.vipExpireTime=su.svipExpireTime; }
             saveUserData(su);
@@ -4592,6 +4635,12 @@ function initVipFeatures(){
               </div>
               <div class="svip-set-area">
                 <div class="svip-set-title">💠 SVIP 专属设置（独立特效，可自由开关）</div>
+                <div class="svip-stage-box">
+                  <div class="svip-stage-head"><span id="svipStageCur">未开通 SVIP</span><span class="svip-stage-tip">阶段 1~10 · 满级 SVIP.10</span></div>
+                  <div class="svip-stage-track"><div class="svip-stage-fill" id="svipStageFill"></div></div>
+                  <div class="svip-stage-hint" id="svipStageHint"></div>
+                  <button id="svipUpgradeBtn">⬆️ 提升 SVIP 阶段（消耗积分）</button>
+                </div>
                 <label class="svip-sw"><input type="checkbox" id="svipEffTime" checked> 🔢 计时数字五彩流光</label>
                 <label class="svip-sw"><input type="checkbox" id="svipEffSnake" checked> 🐍 贪吃蛇彩虹星光拖尾</label>
                 <label class="svip-sw"><input type="checkbox" id="svipEffBadge" checked> 💠 SVIP 炫彩徽章</label>
@@ -4632,17 +4681,20 @@ function initVipFeatures(){
                 var x=c.getContext('2d'),stars=[];
                 function resize(){c.width=innerWidth;c.height=innerHeight;}
                 resize();addEventListener('resize',resize);
-                for(var i=0;i<60;i++)stars.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.6+.4,dx:(Math.random()-.5)*.35,dy:(Math.random()-.5)*.35,h:Math.random()*360});
+                for(var i=0;i<120;i++)stars.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.6+.4,dx:(Math.random()-.5)*.35,dy:(Math.random()-.5)*.35,h:Math.random()*360});
                 function loop(){
                   if(getComputedStyle(c).display!=='none'){
                     x.clearRect(0,0,c.width,c.height);
-                    stars.forEach(function(s){
+                    var su2={};try{su2=JSON.parse(localStorage.getItem('timerUser')||'{}');}catch(e){}
+                    var lv2=(su2.svip&&(su2.svipExpireTime||0)>Date.now())?(su2.svipLevel||1):0;
+                    var cnt=30+lv2*8;if(cnt>stars.length)cnt=stars.length;
+                    for(var si=0;si<cnt;si++){var s=stars[si];
                       s.x+=s.dx;s.y+=s.dy;
                       if(s.x<0)s.x=c.width;if(s.x>c.width)s.x=0;if(s.y<0)s.y=c.height;if(s.y>c.height)s.y=0;
                       var hue=(s.h+Date.now()/30)%360;
                       x.fillStyle='hsl('+hue+',90%,70%)';x.shadowBlur=6;x.shadowColor=x.fillStyle;
                       x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill();
-                    });x.shadowBlur=0;
+                    }x.shadowBlur=0;
                   }
                   requestAnimationFrame(loop);
                 }
