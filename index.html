@@ -138,6 +138,16 @@ button:disabled{opacity:0.4;cursor:not-allowed;}
     position:absolute;bottom:-4px;right:-4px;
     background:#ff4444;color:#fff;font-size:10px;padding:2px 4px;border-radius:4px;font-weight:bold;
 }
+/* 兑换头像框 */
+.top-avatar.frame-gold{border:2px solid #ffd700;animation:frameGoldPulse 2.2s ease-in-out infinite;}
+.top-avatar.frame-diamond{border:2px solid #7de6e0;animation:frameDiaPulse 2.2s ease-in-out infinite;}
+@keyframes frameGoldPulse{0%,100%{box-shadow:0 0 6px #ffd700,0 0 12px rgba(255,215,0,.5);}50%{box-shadow:0 0 12px #ffd700,0 0 24px rgba(255,215,0,.85);}}
+@keyframes frameDiaPulse{0%,100%{box-shadow:0 0 6px #7de6e0,0 0 12px rgba(180,144,202,.6);}50%{box-shadow:0 0 12px #b490ca,0 0 26px rgba(125,230,224,.95);}}
+/* 兑换称号徽章 */
+.title-badge{display:inline-block;margin-left:8px;padding:2px 9px;border-radius:11px;font-size:11px;font-weight:bold;vertical-align:middle;white-space:nowrap;}
+.title-badge.t-newbie{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#064e3b;}
+.title-badge.t-master{background:linear-gradient(135deg,#f6d365,#fda085);color:#7c2d12;}
+.title-badge.t-king{background:linear-gradient(135deg,#ff512f,#b1047e);color:#fff;}
 
 .setting-container{width:100%;text-align:left;}
 .section-title{
@@ -1320,6 +1330,22 @@ function openFriends(){
     const vipExpire=document.getElementById('vipExpire');
     const openVipBtn=document.getElementById('openVipBtn');
 
+    function renderTitleFrame(){
+        var frame=localStorage.getItem('userFrame');
+        var av=document.getElementById('topAvatarImg');
+        if(av){av.classList.remove('frame-gold','frame-diamond');
+            if(frame==='gold')av.classList.add('frame-gold');
+            else if(frame==='diamond')av.classList.add('frame-diamond');}
+        var title=localStorage.getItem('userTitle');
+        var tb=document.getElementById('topTitleBadge');
+        if(tb){
+            if(!title){tb.classList.add('hidden');tb.textContent='';}
+            else{
+                var cls=title.indexOf('王者')>=0?'t-king':(title.indexOf('大师')>=0?'t-master':'t-newbie');
+                tb.className='title-badge '+cls;tb.textContent=title;tb.classList.remove('hidden');
+            }
+        }
+    }
     function refreshUserUI(){
         const user=getUserData();
         if(user.account){
@@ -1349,6 +1375,7 @@ function openFriends(){
         }
         renderSkin();
         updateVipLocks();
+        renderTitleFrame();
     }
 
     // ============ VIP 锁状态更新 ============
@@ -2554,7 +2581,12 @@ function openFriends(){
             }
         } else if(item.type === 'title'){
             localStorage.setItem('userTitle', item.value);
-            showToast(`称号已装备：${item.value}`);
+            renderTitleFrame();
+            showToast('称号已装备：'+item.value);
+        } else if(item.type === 'frame'){
+            localStorage.setItem('userFrame', item.value);
+            renderTitleFrame();
+            showToast('头像框已装备：'+item.name);
         } else if(item.type === 'bgm'){
             localStorage.setItem('unlockAllMusic', '1');
             showToast('已解锁全部背景音乐！');
@@ -3764,6 +3796,7 @@ function initVipFeatures(){
         <span class="vip-badge hidden" id="topVipBadge">VIP</span>
     </div>
     <span id="topUserName"></span>
+    <span class="title-badge hidden" id="topTitleBadge"></span>
 </div>
 
 <!-- 主导航 -->
