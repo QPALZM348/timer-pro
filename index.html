@@ -3423,10 +3423,11 @@ function initVipFeatures(){
     switchNotif.checked=notifEnabled;
     switchSpeech.checked=speechEnabled;
 
-    // 初始化执行
-    initSkinLoad();
+    // 初始化执行（分步容错：任何一步异常都不阻断其余初始化，并记录错误）
+    function __initStep(name,fn){try{fn();}catch(e){try{localStorage.setItem('initErr:'+name,(e.message||e));}catch(_){}console.error('init '+name,e);}}
+    __initStep('skin',function(){initSkinLoad();});
     // 自愈：修复早期版本兑换VIP只写标志、未激活用户对象的脏数据（积分已扣，免费补回30天）
-    try{
+    __initStep('selfheal',function(){
         const __purch = JSON.parse(localStorage.getItem('purchasedItems')||'[]');
         const __u = getUserData();
         if(__purch.indexOf('vip_30d')>=0 && !checkVipValid(__u)){
@@ -3436,12 +3437,12 @@ function initVipFeatures(){
             localStorage.setItem('vipStatus','1');
             localStorage.setItem('isVip','1');
         }
-    }catch(e){}
-    refreshUserUI();
-    renderPlans();
-    renderPresets();
-    renderHistory();
-    updateNotifDesc();
+    });
+    __initStep('user',function(){refreshUserUI();});
+    __initStep('plans',function(){renderPlans();});
+    __initStep('presets',function(){renderPresets();});
+    __initStep('history',function(){renderHistory();});
+    __initStep('notif',function(){updateNotifDesc();});
     updateVipLocks();
     // 新功能初始化
     renderAchievements();
