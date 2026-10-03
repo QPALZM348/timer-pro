@@ -386,6 +386,12 @@ body.fullscreen-mode .fs-exit-float{display:flex;}
 .settings-btn.vip-lock{opacity:0.6;}
 .settings-btn.vip-lock::after{content:" 🔒VIP";color:#f55;font-size:13px;}
 
+.set-group{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:4px 0 20px;}
+.set-group .settings-btn{margin:0;display:flex;flex-direction:column;justify-content:center;}
+.set-group .settings-btn .btn-line{font-size:15px;}
+.set-group .settings-btn .btn-desc{margin-top:4px;line-height:1.35;}
+@media(max-width:520px){.set-group{grid-template-columns:1fr;}}
+
 /* 导出弹窗 */
 .export-modal{width:90%;max-width:600px;}
 .export-textarea{
@@ -4347,143 +4353,142 @@ function initVipFeatures(){
               </div>
             </details>
 
-            <!-- ========== 设置页独立功能按钮 ========== -->
-            <div class="section-title">🎯 功能快捷操作</div>
-
-            <button class="settings-btn" id="setFullscreenEnter" data-show="not-fullscreen">
-                <span class="btn-icon">⛶</span>进入全屏
-                <span class="btn-desc">进入沉浸全屏模式，按 F11 也可切换</span>
-            </button>
-
-            <button class="settings-btn" id="setFullscreenExit" data-show="fullscreen">
-                <span class="btn-icon">✕</span>退出全屏
-                <span class="btn-desc">退出沉浸全屏，按 Esc 也可退出</span>
-            </button>
-
-            <button class="settings-btn" id="setNotif">
-                <span class="btn-icon">🔔</span>通知权限设置
-                <span class="btn-desc" id="notifDesc">开启后倒计时结束会弹出系统通知</span>
-            </button>
-
-            <button class="settings-btn" id="setSpeech">
-                <span class="btn-icon">🔊</span>语音播报
-                <span class="btn-desc">倒计时最后3秒语音倒数"3、2、1、时间到"</span>
-            </button>
-
-            <button class="settings-btn" id="setMusic">
-                <span class="btn-icon">🎵</span>背景音乐
-                <span class="btn-desc" id="musicDesc">5首精选音乐，前2首免费</span>
-            </button>
-
-            <button class="settings-btn" id="setExportLaps">
-                <span class="btn-icon">📊</span>导出分段计时记录
-                <span class="btn-desc">将 Laps 数据导出为 CSV 或复制到剪贴板</span>
-            </button>
-
-            <button class="settings-btn" id="setExportAll">
-                <span class="btn-icon">📤</span>导出全部数据
-                <span class="btn-desc">导出 Laps + 预设 + 历史记录的完整 CSV</span>
-            </button>
-
-            <button class="settings-btn" id="setClearRecords">
-                <span class="btn-icon">🧹</span>清除计算记录
-                <span class="btn-desc">仅清除计时历史/分段/预设，保留 VIP、皮肤、设置等</span>
-            </button>
-
-            <button class="settings-btn" id="setFeedback">
-                <span class="btn-icon">🐛</span>反馈 Bug
-                <span class="btn-desc">遇到问题？提交反馈，开发者会认真查看每一条</span>
-            </button>
-
-            <!-- ===== 好友列表：设置在里面管理 (V1.5.2) ===== -->
-            <button class="settings-btn" id="setFriends">
-                <span class="btn-icon">👥</span>好友列表
-                <span class="btn-desc">管理你的好友，本地保存</span>
-            </button>
+            <!-- ========== 设置页功能（已分类） ========== -->
+            <div class="section-title">🖥️ 通用与显示</div>
+            <div class="set-group">
+                <button class="settings-btn" id="setFullscreenEnter" data-show="not-fullscreen">
+                                <span class="btn-icon">⛶</span>进入全屏
+                                <span class="btn-desc">进入沉浸全屏模式，按 F11 也可切换</span>
+                            </button>
+                <button class="settings-btn" id="setFullscreenExit" data-show="fullscreen">
+                                <span class="btn-icon">✕</span>退出全屏
+                                <span class="btn-desc">退出沉浸全屏，按 Esc 也可退出</span>
+                            </button>
+                <button class="settings-btn" id="setNotif">
+                                <span class="btn-icon">🔔</span>通知权限设置
+                                <span class="btn-desc" id="notifDesc">开启后倒计时结束会弹出系统通知</span>
+                            </button>
+                <button class="settings-btn" id="setSpeech">
+                                <span class="btn-icon">🔊</span>语音播报
+                                <span class="btn-desc">倒计时最后3秒语音倒数"3、2、1、时间到"</span>
+                            </button>
+                <button class="settings-btn" id="setMusic">
+                                <span class="btn-icon">🎵</span>背景音乐
+                                <span class="btn-desc" id="musicDesc">5首精选音乐，前2首免费</span>
+                            </button>
+            </div>
+            <div class="section-title">🎮 成长与积分</div>
+            <div class="set-group">
                 <button class="settings-btn" id="setAchievements">
-                    <span class="btn-icon">🏆</span>成就墙
-                    <span class="btn-desc">查看等级、经验和解锁的成就</span>
-                </button>
+                                    <span class="btn-icon">🏆</span>成就墙
+                                    <span class="btn-desc">查看等级、经验和解锁的成就</span>
+                                </button>
                 <button class="settings-btn" id="setShop">
-                    <span class="btn-icon">🛒</span>积分商城
-                    <span class="btn-desc">用积分兑换主题、称号等奖励</span>
-                </button>
+                                    <span class="btn-icon">🛒</span>积分商城
+                                    <span class="btn-desc">用积分兑换主题、称号等奖励</span>
+                                </button>
                 <button class="settings-btn" id="setCheckIn">
-                    <span class="btn-icon">📅</span>每日签到
-                    <span class="btn-desc" id="checkInDesc">每天签到领取积分奖励</span>
-                </button>
+                                    <span class="btn-icon">📅</span>每日签到
+                                    <span class="btn-desc" id="checkInDesc">每天签到领取积分奖励</span>
+                                </button>
                 <button class="settings-btn" id="setTasks">
-                    <span class="btn-icon">📋</span>每日任务
-                    <span class="btn-desc">完成任务获取经验奖励</span>
-                </button>
+                                    <span class="btn-icon">📋</span>每日任务
+                                    <span class="btn-desc">完成任务获取经验奖励</span>
+                                </button>
+            </div>
+            <div class="section-title">👥 好友与社交</div>
+            <div class="set-group">
+                <button class="settings-btn" id="setFriends">
+                                <span class="btn-icon">👥</span>好友列表
+                                <span class="btn-desc">管理你的好友，本地保存</span>
+                            </button>
                 <button class="settings-btn" id="setRank">
-                    <span class="btn-icon">🏅</span>好友排行榜
-                    <span class="btn-desc">和好友比拼计时时长</span>
-                </button>
+                                    <span class="btn-icon">🏅</span>好友排行榜
+                                    <span class="btn-desc">和好友比拼计时时长</span>
+                                </button>
                 <button class="settings-btn" id="setWorldClock">
-                    <span class="btn-icon">🌍</span>世界时钟
-                    <span class="btn-desc">查看全球多个时区时间</span>
-                </button>
+                                    <span class="btn-icon">🌍</span>世界时钟
+                                    <span class="btn-desc">查看全球多个时区时间</span>
+                                </button>
                 <button class="settings-btn" id="setFeed">
-                    <span class="btn-icon">📰</span>好友动态
-                    <span class="btn-desc">看看好友们都在做什么</span>
-                </button>
-            <!-- ===== 调试反馈数据：人人可见，点击弹密码框，密码 123456 才能进（V1.5.1）===== -->
-            <button class="settings-btn" id="setAdminDebug">
-                <span class="btn-icon">🐞</span>调试反馈数据
-                <span class="btn-desc">需要密码才能进入（普通用户请勿点击）</span>
-            </button>
-
-            <button class="settings-btn vip-lock" id="setMultiTimer">
-                <span class="btn-icon">🕐</span>多计时器
-                <span class="btn-desc">同时运行多个独立计时器，VIP 专享</span>
-            </button>
-
-            <button class="settings-btn vip-lock" id="setCustomTheme">
-                <span class="btn-icon">🎨</span>自定义主题色
-                <span class="btn-desc">自由选取主色调，VIP 专享</span>
-            </button>
-
-            <!-- ===== 会员专属功能 (V1.4.0) ===== -->
-            <div class="section-title">&#128081; 会员专属功能</div>
-            <p style="font-size:13px;color:#f99;margin-bottom:8px;">以下功能为 VIP 会员专享，开通会员即可解锁全部</p>
-
-            <button class="settings-btn vip-lock" id="vipSound">
-                <span class="btn-icon">&#128276;</span>自定义提示音
-                <span class="btn-desc">上传自己的音频作为计时结束提示音</span>
-            </button>
-            <button class="settings-btn vip-lock" id="vipVoice">
-                <span class="btn-icon">&#127908;</span>语音包切换
-                <span class="btn-desc">男声 / 童声 / 粤语 / 机器人等多种语音</span>
-            </button>
-            <button class="settings-btn vip-lock" id="vipGradient">
-                <span class="btn-icon">&#127752;</span>自定义渐变背景
-                <span class="btn-desc">多套主题渐变 + 自定义颜色组合</span>
-            </button>
-            <button class="settings-btn vip-lock" id="vipFont">
-                <span class="btn-icon">&#128292;</span>计时字体主题
-                <span class="btn-desc">数码管 / 手写 / 像素 / 霓虹灯</span>
-            </button>
-            <button class="settings-btn vip-lock" id="vipCelebrate">
-                <span class="btn-icon">&#127881;</span>计时结束庆祝动画
-                <span class="btn-desc">到点全屏礼花庆祝（可开关）</span>
-            </button>
-            <button class="settings-btn vip-lock" id="vipStats">
-                <span class="btn-icon">&#128200;</span>详细统计报表
-                <span class="btn-desc">专注时长趋势、最常使用预设等</span>
-            </button>
-            <button class="settings-btn vip-lock" id="vipCloud">
-                <span class="btn-icon">&#9729;&#65039;</span>云端备份 / 同步
-                <span class="btn-desc">导出 / 导入全部数据（跨设备同步）</span>
-            </button>
-            <button class="settings-btn vip-lock" id="vipShare">
-                <span class="btn-icon">&#127941;</span>成就分享卡片
-                <span class="btn-desc">生成精美图片分享到社交平台</span>
-            </button>
-            <button class="settings-btn vip-lock" id="vipTeam">
-                <span class="btn-icon">&#128101;</span>团队协作计时
-                <span class="btn-desc">加入房间，多人同步同一计时器</span>
-            </button>
+                                    <span class="btn-icon">📰</span>好友动态
+                                    <span class="btn-desc">看看好友们都在做什么</span>
+                                </button>
+            </div>
+            <div class="section-title">💾 数据与记录</div>
+            <div class="set-group">
+                <button class="settings-btn" id="setExportLaps">
+                                <span class="btn-icon">📊</span>导出分段计时记录
+                                <span class="btn-desc">将 Laps 数据导出为 CSV 或复制到剪贴板</span>
+                            </button>
+                <button class="settings-btn" id="setExportAll">
+                                <span class="btn-icon">📤</span>导出全部数据
+                                <span class="btn-desc">导出 Laps + 预设 + 历史记录的完整 CSV</span>
+                            </button>
+                <button class="settings-btn" id="setClearRecords">
+                                <span class="btn-icon">🧹</span>清除计算记录
+                                <span class="btn-desc">仅清除计时历史/分段/预设，保留 VIP、皮肤、设置等</span>
+                            </button>
+            </div>
+            <div class="section-title">👑 会员专属功能</div>
+            <p style="font-size:13px;color:#f99;margin:0 0 10px;">以下功能为 VIP/SVIP 专享，开通会员即可一键解锁全部</p>
+            <div class="set-group">
+                <button class="settings-btn vip-lock" id="setMultiTimer">
+                                <span class="btn-icon">🕐</span>多计时器
+                                <span class="btn-desc">同时运行多个独立计时器，VIP 专享</span>
+                            </button>
+                <button class="settings-btn vip-lock" id="setCustomTheme">
+                                <span class="btn-icon">🎨</span>自定义主题色
+                                <span class="btn-desc">自由选取主色调，VIP 专享</span>
+                            </button>
+                <button class="settings-btn vip-lock" id="vipSound">
+                                <span class="btn-icon">&#128276;</span>自定义提示音
+                                <span class="btn-desc">上传自己的音频作为计时结束提示音</span>
+                            </button>
+                <button class="settings-btn vip-lock" id="vipVoice">
+                                <span class="btn-icon">&#127908;</span>语音包切换
+                                <span class="btn-desc">男声 / 童声 / 粤语 / 机器人等多种语音</span>
+                            </button>
+                <button class="settings-btn vip-lock" id="vipGradient">
+                                <span class="btn-icon">&#127752;</span>自定义渐变背景
+                                <span class="btn-desc">多套主题渐变 + 自定义颜色组合</span>
+                            </button>
+                <button class="settings-btn vip-lock" id="vipFont">
+                                <span class="btn-icon">&#128292;</span>计时字体主题
+                                <span class="btn-desc">数码管 / 手写 / 像素 / 霓虹灯</span>
+                            </button>
+                <button class="settings-btn vip-lock" id="vipCelebrate">
+                                <span class="btn-icon">&#127881;</span>计时结束庆祝动画
+                                <span class="btn-desc">到点全屏礼花庆祝（可开关）</span>
+                            </button>
+                <button class="settings-btn vip-lock" id="vipStats">
+                                <span class="btn-icon">&#128200;</span>详细统计报表
+                                <span class="btn-desc">专注时长趋势、最常使用预设等</span>
+                            </button>
+                <button class="settings-btn vip-lock" id="vipCloud">
+                                <span class="btn-icon">&#9729;&#65039;</span>云端备份 / 同步
+                                <span class="btn-desc">导出 / 导入全部数据（跨设备同步）</span>
+                            </button>
+                <button class="settings-btn vip-lock" id="vipShare">
+                                <span class="btn-icon">&#127941;</span>成就分享卡片
+                                <span class="btn-desc">生成精美图片分享到社交平台</span>
+                            </button>
+                <button class="settings-btn vip-lock" id="vipTeam">
+                                <span class="btn-icon">&#128101;</span>团队协作计时
+                                <span class="btn-desc">加入房间，多人同步同一计时器</span>
+                            </button>
+            </div>
+            <div class="section-title">🛠️ 帮助与其他</div>
+            <div class="set-group">
+                <button class="settings-btn" id="setFeedback">
+                                <span class="btn-icon">🐛</span>反馈 Bug
+                                <span class="btn-desc">遇到问题？提交反馈，开发者会认真查看每一条</span>
+                            </button>
+                <button class="settings-btn" id="setAdminDebug">
+                                <span class="btn-icon">🐞</span>调试反馈数据
+                                <span class="btn-desc">需要密码才能进入（普通用户请勿点击）</span>
+                            </button>
+            </div>
 
 
             <!-- 主题皮肤设置 -->
