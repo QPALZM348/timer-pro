@@ -4199,7 +4199,307 @@ function initVipFeatures(){
             <div class="current-version" id="versionText">当前版本：计时器 Pro V2.2.7</div>
             <div class="dev-tip" id="clickTip"></div>
 
-                        <div class="setting-item"><button id="setAbout">ℹ️ 关于我们</button></div>
+                                    <!-- ===== 全设置·子标签（默认空白，点击才显示） ===== -->
+            <div class="set-subtabs">
+              <button class="set-subtab" data-set="general">🖥️ 通用显示</button>
+              <button class="set-subtab" data-set="growth">🎮 成长积分</button>
+              <button class="set-subtab" data-set="social">👥 好友社交</button>
+              <button class="set-subtab" data-set="skin">🎨 外观皮肤</button>
+              <button class="set-subtab" data-set="alarm">⏰ 提醒闹钟</button>
+              <button class="set-subtab" data-set="data">💾 数据记录</button>
+              <button class="set-subtab" data-set="account">👤 账号中心</button>
+              <button class="set-subtab" data-set="vip">👑 会员专属</button>
+              <button class="set-subtab" data-set="help">🛠️ 帮助其他</button>
+            </div>
+            <div class="set-placeholder" id="setPlaceholder">👆 请点击上方分类，下面才会显示对应内容</div>
+            <div class="set-panel hidden" data-set="general">
+              <div class="set-group">
+                <button class="settings-btn" id="setFullscreenEnter" data-show="not-fullscreen">
+                                                <span class="btn-icon">⛶</span>进入全屏
+                                                <span class="btn-desc">进入沉浸全屏模式，按 F11 也可切换</span>
+                                            </button>
+                <button class="settings-btn" id="setFullscreenExit" data-show="fullscreen">
+                                                <span class="btn-icon">✕</span>退出全屏
+                                                <span class="btn-desc">退出沉浸全屏，按 Esc 也可退出</span>
+                                            </button>
+                <button class="settings-btn" id="setNotif">
+                                                <span class="btn-icon">🔔</span>通知权限设置
+                                                <span class="btn-desc" id="notifDesc">开启后倒计时结束会弹出系统通知</span>
+                                            </button>
+                <button class="settings-btn" id="setSpeech">
+                                                <span class="btn-icon">🔊</span>语音播报
+                                                <span class="btn-desc">倒计时最后3秒语音倒数"3、2、1、时间到"</span>
+                                            </button>
+                <button class="settings-btn" id="setMusic">
+                                                <span class="btn-icon">🎵</span>背景音乐
+                                                <span class="btn-desc" id="musicDesc">5首精选音乐，前2首免费</span>
+                                            </button>
+              </div>
+            </div>
+            <div class="set-panel hidden" data-set="growth">
+              <div class="set-group">
+                <button class="settings-btn" id="setAchievements">
+                                                    <span class="btn-icon">🏆</span>成就墙
+                                                    <span class="btn-desc">查看等级、经验和解锁的成就</span>
+                                                </button>
+                <button class="settings-btn" id="setShop">
+                                                    <span class="btn-icon">🛒</span>积分商城
+                                                    <span class="btn-desc">用积分兑换主题、称号等奖励</span>
+                                                </button>
+                <button class="settings-btn" id="setCheckIn">
+                                                    <span class="btn-icon">📅</span>每日签到
+                                                    <span class="btn-desc" id="checkInDesc">每天签到领取积分奖励</span>
+                                                </button>
+                <button class="settings-btn" id="setTasks">
+                                                    <span class="btn-icon">📋</span>每日任务
+                                                    <span class="btn-desc">完成任务获取经验奖励</span>
+                                                </button>
+              </div>
+            </div>
+            <div class="set-panel hidden" data-set="social">
+              <div class="set-group">
+                <button class="settings-btn" id="setFriends">
+                                                <span class="btn-icon">👥</span>好友列表
+                                                <span class="btn-desc">管理你的好友，本地保存</span>
+                                            </button>
+                <button class="settings-btn" id="setRank">
+                                                    <span class="btn-icon">🏅</span>好友排行榜
+                                                    <span class="btn-desc">和好友比拼计时时长</span>
+                                                </button>
+                <button class="settings-btn" id="setWorldClock">
+                                                    <span class="btn-icon">🌍</span>世界时钟
+                                                    <span class="btn-desc">查看全球多个时区时间</span>
+                                                </button>
+                <button class="settings-btn" id="setFeed">
+                                                    <span class="btn-icon">📰</span>好友动态
+                                                    <span class="btn-desc">看看好友们都在做什么</span>
+                                                </button>
+              </div>
+            </div>
+            <div class="set-panel hidden" data-set="skin">
+            <div class="section-title">🎨 主题皮肤设置</div>
+            <div class="skin-wrap" id="skinWrap"></div>
+
+            <!-- 自定义主题色 (VIP) -->
+            <div id="customThemeArea" class="hidden">
+                <div class="section-title">自定义主题色</div>
+                <div class="color-picker-row">
+                    <label>主色：</label>
+                    <input type="color" id="customColorPicker" value="#00ccff">
+                    <span class="custom-color-preview" id="customColorPreview"></span>
+                </div>
+                <button id="applyCustomColor" style="padding:8px 16px;font-size:14px;">应用自定义颜色</button>
+            </div>
+            </div>
+            <div class="set-panel hidden" data-set="alarm">
+            <!-- 闹钟设置 -->
+            <div class="section-title">⏰ 闹钟设置</div>
+            <div class="input-item"><label style="font-size:17px;"><input type="checkbox" id="switchVib" checked> 开启震动</label></div>
+            <div class="input-item"><label style="font-size:17px;"><input type="checkbox" id="switchAudio" checked> 开启提示音</label></div>
+            <div class="input-item"><label style="font-size:17px;"><input type="checkbox" id="switchSpeech" checked> 开启语音播报</label></div>
+            <div class="input-item"><label style="font-size:17px;"><input type="checkbox" id="switchNotif" checked> 开启系统通知</label></div>
+
+            <!-- 计时结束自定义文字 -->
+            <div class="input-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+                <label style="font-size:17px;">⏰ 倒计时结束显示文字</label>
+                <input type="text" id="finishMsgInput" placeholder="例：面煮好了！去吃吧 🍜（留空则不显示）"
+                    style="width:100%;padding:10px 12px;font-size:15px;border-radius:8px;outline:none;
+                           background:rgba(0,0,0,0.2);border:1px solid var(--border-color);color:#fff;">
+                <div class="finish-msg-preview" id="finishMsgPreview"><span class="ph">预览将在此显示</span></div>
+            </div>
+
+            <!-- 背景随进度变化 -->
+            <div class="input-item"><label style="font-size:17px;"><input type="checkbox" id="switchProgressBg" checked> 🔴 背景随进度变红（倒计时越近越红）</label></div>
+            </div>
+            <div class="set-panel hidden" data-set="data">
+              <div class="set-group">
+                <button class="settings-btn" id="setExportLaps">
+                                                <span class="btn-icon">📊</span>导出分段计时记录
+                                                <span class="btn-desc">将 Laps 数据导出为 CSV 或复制到剪贴板</span>
+                                            </button>
+                <button class="settings-btn" id="setExportAll">
+                                                <span class="btn-icon">📤</span>导出全部数据
+                                                <span class="btn-desc">导出 Laps + 预设 + 历史记录的完整 CSV</span>
+                                            </button>
+                <button class="settings-btn" id="setClearRecords">
+                                                <span class="btn-icon">🧹</span>清除计算记录
+                                                <span class="btn-desc">仅清除计时历史/分段/预设，保留 VIP、皮肤、设置等</span>
+                                            </button>
+              </div>
+            <!-- 计时历史 -->
+            <div class="section-title">📜 计时历史</div>
+            <div id="historyBar" class="notif-bar hidden">
+                您有 <span id="historyCount">0</span> 条计时记录
+                <button id="clearHistoryBtn" style="padding:4px 10px;font-size:12px;">清空</button>
+            </div>
+            <div class="history-list" id="historyList"></div>
+
+            <!-- 扫码启动预设 -->
+            <div class="section-title">📲 扫码启动预设（分享预设二维码）</div>
+            <div class="qr-gen-wrap">
+                <div class="qr-row">
+                    <label style="font-size:15px;">选择预设：</label>
+                    <select id="qrPresetSelect" style="min-width:160px;"></select>
+                </div>
+                <div class="qr-row">
+                    <label style="font-size:15px;">或自定义：</label>
+                    <input type="number" id="qrCustomM" placeholder="分" min="0" style="width:70px;">
+                    <span>分</span>
+                    <input type="number" id="qrCustomS" placeholder="秒" min="0" style="width:70px;">
+                    <span>秒</span>
+                </div>
+                <button class="settings-btn" id="qrGenerateBtn" style="width:auto;display:inline-block;">
+                    <span class="btn-icon">🔗</span>生成二维码
+                </button>
+            </div>
+            <div class="qr-canvas-box" id="qrCanvasBox" style="display:none;">
+                <canvas id="qrCanvas" width="200" height="200"></canvas>
+                <div class="qr-url" id="qrUrlText"></div>
+                <div class="qr-actions">
+                    <button id="qrDownloadBtn" style="padding:6px 14px;font-size:13px;">下载二维码</button>
+                    <button id="qrCopyLinkBtn" style="padding:6px 14px;font-size:13px;">复制链接</button>
+                </div>
+            </div>
+            </div>
+            <div class="set-panel hidden" data-set="account">
+            <!-- 账号区域 -->
+            <div id="loginArea">
+                <div class="section-title">👤 账号登录</div>
+                <div class="tab-switch-row">
+                    <button id="tabPwdLogin" class="active">账号密码登录</button>
+                    <button id="tabPhoneLogin">手机验证码登录</button>
+                </div>
+                <div id="pwdLoginPanel">
+                    <div class="input-item"><input type="text" id="accInput" placeholder="账号"></div>
+                    <div class="input-item"><input type="password" id="pwdInput" placeholder="密码"></div>
+                    <div class="input-item"><input type="text" id="activationCodeInput" placeholder="激活码（可选，付费获得）" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);"></div>
+                </div>
+                <div id="phoneLoginPanel" class="hidden">
+                    <div class="input-item"><input type="tel" id="phoneInput" placeholder="手机号码"></div>
+                    <div class="input-item code-row">
+                        <input type="text" id="codeInput" placeholder="验证码">
+                        <button id="getCodeBtn">获取验证码</button>
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <button id="submitBtn">登录</button>
+                    <button id="switchModeBtn">切换注册</button>
+                </div>
+                <div class="text-btn" id="forgetPwdBtn">忘记密码？重置密码</div>
+                <div id="resetPwdWrap" class="hidden">
+                    <div class="section-title">重置密码</div>
+                    <div class="input-item"><input type="text" id="resetAcc" placeholder="账号"></div>
+                    <div class="input-item"><input type="password" id="newPwd" placeholder="新密码"></div>
+                    <div class="btn-row">
+                        <button id="resetSubmit">确认重置</button>
+                        <button id="backLoginBtn">返回登录</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="userManageArea" class="hidden">
+                <div class="section-title">👤 账号信息</div>
+                <p style="font-size:17px;margin:8px 0;">当前账号：<span id="manageUserName"></span></p>
+                <p style="font-size:17px;margin:8px 0;">绑定手机号：<span id="bindPhone">未绑定</span></p>
+                <p style="font-size:17px;margin:8px 0;">会员状态：<span id="vipStatus">普通用户</span></p>
+                <p style="font-size:17px;margin:8px 0;">会员到期时间：<span id="vipExpire">未开通</span></p>
+                <div class="vip-card">
+                    <h4>VIP会员专属权益</h4>
+                    <ul>
+                        <li>无时长使用限制，超长倒计时</li>
+                        <li>多款会员专属主题皮肤切换</li>
+                        <li>多计时器（同时跑多个独立计时）</li>
+                        <li>自定义主题色 + 渐变背景 + 字体主题</li>
+                        <li>分段计时(Laps) 圈速分析</li>
+                        <li>自定义预设模板（无限数量）</li>
+                        <li>扫码分享预设二维码</li>
+                        <li>自定义提示音 / 语音包切换</li>
+                        <li>计时结束全屏庆祝动画</li>
+                        <li>详细统计报表 + 无限历史记录</li>
+                        <li>云端备份与跨设备同步</li>
+                        <li>成就分享卡片（生成图片）</li>
+                        <li>团队协作计时（同步房间）</li>
+                        <li>全部成就徽章自动解锁</li>
+                    </ul>
+                </div>
+                <div class="btn-row">
+                    <button id="openVipBtn" class="vip-btn">开通/续费会员</button>
+                    <button id="logoutBtn">退出登录</button>
+                    <button class="danger-btn" id="delAccountBtn">注销账号</button>
+                </div>
+                <div class="avatar-select-box">
+                    <p style="font-size:17px;">更换头像：</p>
+                    <div class="avatar-list">
+                        <img class="avatar-item" data-src="https://picsum.photos/id/1001/60/60" src="https://picsum.photos/id/1001/60/60">
+                        <img class="avatar-item" data-src="https://picsum.photos/id/1002/60/60" src="https://picsum.photos/id/1002/60/60">
+                        <img class="avatar-item" data-src="https://picsum.photos/id/1003/60/60" src="https://picsum.photos/id/1003/60/60">
+                        <img class="avatar-item" data-src="https://picsum.photos/id/1004/60/60" src="https://picsum.photos/id/1004/60/60">
+                    </div>
+                </div>
+            </div>
+            </div>
+            <div class="set-panel hidden" data-set="vip">
+              <p style="font-size:13px;color:#f99;margin:0 0 10px;">以下功能为 VIP/SVIP 专享，开通会员即可一键解锁全部</p>
+              <div class="set-group">
+                <button class="settings-btn vip-lock" id="setMultiTimer">
+                                                <span class="btn-icon">🕐</span>多计时器
+                                                <span class="btn-desc">同时运行多个独立计时器，VIP 专享</span>
+                                            </button>
+                <button class="settings-btn vip-lock" id="setCustomTheme">
+                                                <span class="btn-icon">🎨</span>自定义主题色
+                                                <span class="btn-desc">自由选取主色调，VIP 专享</span>
+                                            </button>
+                <button class="settings-btn vip-lock" id="vipSound">
+                                                <span class="btn-icon">&#128276;</span>自定义提示音
+                                                <span class="btn-desc">上传自己的音频作为计时结束提示音</span>
+                                            </button>
+                <button class="settings-btn vip-lock" id="vipVoice">
+                                                <span class="btn-icon">&#127908;</span>语音包切换
+                                                <span class="btn-desc">男声 / 童声 / 粤语 / 机器人等多种语音</span>
+                                            </button>
+                <button class="settings-btn vip-lock" id="vipGradient">
+                                                <span class="btn-icon">&#127752;</span>自定义渐变背景
+                                                <span class="btn-desc">多套主题渐变 + 自定义颜色组合</span>
+                                            </button>
+                <button class="settings-btn vip-lock" id="vipFont">
+                                                <span class="btn-icon">&#128292;</span>计时字体主题
+                                                <span class="btn-desc">数码管 / 手写 / 像素 / 霓虹灯</span>
+                                            </button>
+                <button class="settings-btn vip-lock" id="vipCelebrate">
+                                                <span class="btn-icon">&#127881;</span>计时结束庆祝动画
+                                                <span class="btn-desc">到点全屏礼花庆祝（可开关）</span>
+                                            </button>
+                <button class="settings-btn vip-lock" id="vipStats">
+                                                <span class="btn-icon">&#128200;</span>详细统计报表
+                                                <span class="btn-desc">专注时长趋势、最常使用预设等</span>
+                                            </button>
+                <button class="settings-btn vip-lock" id="vipCloud">
+                                                <span class="btn-icon">&#9729;&#65039;</span>云端备份 / 同步
+                                                <span class="btn-desc">导出 / 导入全部数据（跨设备同步）</span>
+                                            </button>
+                <button class="settings-btn vip-lock" id="vipShare">
+                                                <span class="btn-icon">&#127941;</span>成就分享卡片
+                                                <span class="btn-desc">生成精美图片分享到社交平台</span>
+                                            </button>
+                <button class="settings-btn vip-lock" id="vipTeam">
+                                                <span class="btn-icon">&#128101;</span>团队协作计时
+                                                <span class="btn-desc">加入房间，多人同步同一计时器</span>
+                                            </button>
+              </div>
+            </div>
+            <div class="set-panel hidden" data-set="help">
+              <div class="set-group">
+                <button class="settings-btn" id="setFeedback">
+                                                <span class="btn-icon">🐛</span>反馈 Bug
+                                                <span class="btn-desc">遇到问题？提交反馈，开发者会认真查看每一条</span>
+                                            </button>
+                <button class="settings-btn" id="setAdminDebug">
+                                                <span class="btn-icon">🐞</span>调试反馈数据
+                                                <span class="btn-desc">需要密码才能进入（普通用户请勿点击）</span>
+                                            </button>
+              </div>
+<div class="setting-item"><button id="setAbout">ℹ️ 关于我们</button></div>
+
 
         <!-- 更新日志 -->
             <div class="section-title">📝 版本更新日志</div>
@@ -4360,330 +4660,6 @@ function initVipFeatures(){
               </div>
             </details>
 
-            <!-- ========== 设置页功能（子标签切换） ========== -->
-            <div class="set-subtabs">
-              <button class="set-subtab" data-set="general">🖥️ 通用显示</button>
-              <button class="set-subtab" data-set="growth">🎮 成长积分</button>
-              <button class="set-subtab" data-set="social">👥 好友社交</button>
-              <button class="set-subtab" data-set="data">💾 数据记录</button>
-              <button class="set-subtab" data-set="vip">👑 会员专属</button>
-              <button class="set-subtab" data-set="help">🛠️ 帮助其他</button>
-            </div>
-            <div class="set-placeholder" id="setPlaceholder">👆 请点击上方分类，下面才会显示对应功能</div>
-            <div class="set-panel hidden" data-set="general">
-              <div class="set-group">
-                <button class="settings-btn" id="setFullscreenEnter" data-show="not-fullscreen">
-                                <span class="btn-icon">⛶</span>进入全屏
-                                <span class="btn-desc">进入沉浸全屏模式，按 F11 也可切换</span>
-                            </button>
-                <button class="settings-btn" id="setFullscreenExit" data-show="fullscreen">
-                                <span class="btn-icon">✕</span>退出全屏
-                                <span class="btn-desc">退出沉浸全屏，按 Esc 也可退出</span>
-                            </button>
-                <button class="settings-btn" id="setNotif">
-                                <span class="btn-icon">🔔</span>通知权限设置
-                                <span class="btn-desc" id="notifDesc">开启后倒计时结束会弹出系统通知</span>
-                            </button>
-                <button class="settings-btn" id="setSpeech">
-                                <span class="btn-icon">🔊</span>语音播报
-                                <span class="btn-desc">倒计时最后3秒语音倒数"3、2、1、时间到"</span>
-                            </button>
-                <button class="settings-btn" id="setMusic">
-                                <span class="btn-icon">🎵</span>背景音乐
-                                <span class="btn-desc" id="musicDesc">5首精选音乐，前2首免费</span>
-                            </button>
-            </div>
-            </div>
-            <div class="set-panel hidden" data-set="growth">
-              <div class="set-group">
-                <button class="settings-btn" id="setAchievements">
-                                    <span class="btn-icon">🏆</span>成就墙
-                                    <span class="btn-desc">查看等级、经验和解锁的成就</span>
-                                </button>
-                <button class="settings-btn" id="setShop">
-                                    <span class="btn-icon">🛒</span>积分商城
-                                    <span class="btn-desc">用积分兑换主题、称号等奖励</span>
-                                </button>
-                <button class="settings-btn" id="setCheckIn">
-                                    <span class="btn-icon">📅</span>每日签到
-                                    <span class="btn-desc" id="checkInDesc">每天签到领取积分奖励</span>
-                                </button>
-                <button class="settings-btn" id="setTasks">
-                                    <span class="btn-icon">📋</span>每日任务
-                                    <span class="btn-desc">完成任务获取经验奖励</span>
-                                </button>
-            </div>
-            </div>
-            <div class="set-panel hidden" data-set="social">
-              <div class="set-group">
-                <button class="settings-btn" id="setFriends">
-                                <span class="btn-icon">👥</span>好友列表
-                                <span class="btn-desc">管理你的好友，本地保存</span>
-                            </button>
-                <button class="settings-btn" id="setRank">
-                                    <span class="btn-icon">🏅</span>好友排行榜
-                                    <span class="btn-desc">和好友比拼计时时长</span>
-                                </button>
-                <button class="settings-btn" id="setWorldClock">
-                                    <span class="btn-icon">🌍</span>世界时钟
-                                    <span class="btn-desc">查看全球多个时区时间</span>
-                                </button>
-                <button class="settings-btn" id="setFeed">
-                                    <span class="btn-icon">📰</span>好友动态
-                                    <span class="btn-desc">看看好友们都在做什么</span>
-                                </button>
-            </div>
-            </div>
-            <div class="set-panel hidden" data-set="data">
-              <div class="set-group">
-                <button class="settings-btn" id="setExportLaps">
-                                <span class="btn-icon">📊</span>导出分段计时记录
-                                <span class="btn-desc">将 Laps 数据导出为 CSV 或复制到剪贴板</span>
-                            </button>
-                <button class="settings-btn" id="setExportAll">
-                                <span class="btn-icon">📤</span>导出全部数据
-                                <span class="btn-desc">导出 Laps + 预设 + 历史记录的完整 CSV</span>
-                            </button>
-                <button class="settings-btn" id="setClearRecords">
-                                <span class="btn-icon">🧹</span>清除计算记录
-                                <span class="btn-desc">仅清除计时历史/分段/预设，保留 VIP、皮肤、设置等</span>
-                            </button>
-            </div>
-            </div>
-            <div class="set-panel hidden" data-set="vip">
-              <p style="font-size:13px;color:#f99;margin:0 0 10px;">以下功能为 VIP/SVIP 专享，开通会员即可一键解锁全部</p>
-              <div class="set-group">
-                <button class="settings-btn vip-lock" id="setMultiTimer">
-                                <span class="btn-icon">🕐</span>多计时器
-                                <span class="btn-desc">同时运行多个独立计时器，VIP 专享</span>
-                            </button>
-                <button class="settings-btn vip-lock" id="setCustomTheme">
-                                <span class="btn-icon">🎨</span>自定义主题色
-                                <span class="btn-desc">自由选取主色调，VIP 专享</span>
-                            </button>
-                <button class="settings-btn vip-lock" id="vipSound">
-                                <span class="btn-icon">&#128276;</span>自定义提示音
-                                <span class="btn-desc">上传自己的音频作为计时结束提示音</span>
-                            </button>
-                <button class="settings-btn vip-lock" id="vipVoice">
-                                <span class="btn-icon">&#127908;</span>语音包切换
-                                <span class="btn-desc">男声 / 童声 / 粤语 / 机器人等多种语音</span>
-                            </button>
-                <button class="settings-btn vip-lock" id="vipGradient">
-                                <span class="btn-icon">&#127752;</span>自定义渐变背景
-                                <span class="btn-desc">多套主题渐变 + 自定义颜色组合</span>
-                            </button>
-                <button class="settings-btn vip-lock" id="vipFont">
-                                <span class="btn-icon">&#128292;</span>计时字体主题
-                                <span class="btn-desc">数码管 / 手写 / 像素 / 霓虹灯</span>
-                            </button>
-                <button class="settings-btn vip-lock" id="vipCelebrate">
-                                <span class="btn-icon">&#127881;</span>计时结束庆祝动画
-                                <span class="btn-desc">到点全屏礼花庆祝（可开关）</span>
-                            </button>
-                <button class="settings-btn vip-lock" id="vipStats">
-                                <span class="btn-icon">&#128200;</span>详细统计报表
-                                <span class="btn-desc">专注时长趋势、最常使用预设等</span>
-                            </button>
-                <button class="settings-btn vip-lock" id="vipCloud">
-                                <span class="btn-icon">&#9729;&#65039;</span>云端备份 / 同步
-                                <span class="btn-desc">导出 / 导入全部数据（跨设备同步）</span>
-                            </button>
-                <button class="settings-btn vip-lock" id="vipShare">
-                                <span class="btn-icon">&#127941;</span>成就分享卡片
-                                <span class="btn-desc">生成精美图片分享到社交平台</span>
-                            </button>
-                <button class="settings-btn vip-lock" id="vipTeam">
-                                <span class="btn-icon">&#128101;</span>团队协作计时
-                                <span class="btn-desc">加入房间，多人同步同一计时器</span>
-                            </button>
-            </div>
-            </div>
-            <div class="set-panel hidden" data-set="help">
-              <div class="set-group">
-                <button class="settings-btn" id="setFeedback">
-                                <span class="btn-icon">🐛</span>反馈 Bug
-                                <span class="btn-desc">遇到问题？提交反馈，开发者会认真查看每一条</span>
-                            </button>
-                <button class="settings-btn" id="setAdminDebug">
-                                <span class="btn-icon">🐞</span>调试反馈数据
-                                <span class="btn-desc">需要密码才能进入（普通用户请勿点击）</span>
-                            </button>
-            </div>
-            </div>
-            <script>
-            (function(){
-              var tabs=document.querySelectorAll('.set-subtab');
-              var panels=document.querySelectorAll('.set-panel');
-              var ph=document.getElementById('setPlaceholder');
-              tabs.forEach(function(tab){
-                tab.addEventListener('click',function(){
-                  tabs.forEach(function(t){t.classList.remove('active');});
-                  tab.classList.add('active');
-                  var k=tab.getAttribute('data-set');
-                  panels.forEach(function(p){p.classList.toggle('hidden',p.getAttribute('data-set')!==k);});
-                  if(ph)ph.classList.add('hidden');
-                });
-              });
-            })();
-            </script>
-
-            <!-- 主题皮肤设置 -->
-            <div class="section-title">🎨 主题皮肤设置</div>
-            <div class="skin-wrap" id="skinWrap"></div>
-
-            <!-- 自定义主题色 (VIP) -->
-            <div id="customThemeArea" class="hidden">
-                <div class="section-title">自定义主题色</div>
-                <div class="color-picker-row">
-                    <label>主色：</label>
-                    <input type="color" id="customColorPicker" value="#00ccff">
-                    <span class="custom-color-preview" id="customColorPreview"></span>
-                </div>
-                <button id="applyCustomColor" style="padding:8px 16px;font-size:14px;">应用自定义颜色</button>
-            </div>
-
-            <!-- 闹钟设置 -->
-            <div class="section-title">⏰ 闹钟设置</div>
-            <div class="input-item"><label style="font-size:17px;"><input type="checkbox" id="switchVib" checked> 开启震动</label></div>
-            <div class="input-item"><label style="font-size:17px;"><input type="checkbox" id="switchAudio" checked> 开启提示音</label></div>
-            <div class="input-item"><label style="font-size:17px;"><input type="checkbox" id="switchSpeech" checked> 开启语音播报</label></div>
-            <div class="input-item"><label style="font-size:17px;"><input type="checkbox" id="switchNotif" checked> 开启系统通知</label></div>
-
-            <!-- 计时结束自定义文字 -->
-            <div class="input-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
-                <label style="font-size:17px;">⏰ 倒计时结束显示文字</label>
-                <input type="text" id="finishMsgInput" placeholder="例：面煮好了！去吃吧 🍜（留空则不显示）"
-                    style="width:100%;padding:10px 12px;font-size:15px;border-radius:8px;outline:none;
-                           background:rgba(0,0,0,0.2);border:1px solid var(--border-color);color:#fff;">
-                <div class="finish-msg-preview" id="finishMsgPreview"><span class="ph">预览将在此显示</span></div>
-            </div>
-
-            <!-- 背景随进度变化 -->
-            <div class="input-item"><label style="font-size:17px;"><input type="checkbox" id="switchProgressBg" checked> 🔴 背景随进度变红（倒计时越近越红）</label></div>
-
-            <!-- 账号区域 -->
-            <div id="loginArea">
-                <div class="section-title">👤 账号登录</div>
-                <div class="tab-switch-row">
-                    <button id="tabPwdLogin" class="active">账号密码登录</button>
-                    <button id="tabPhoneLogin">手机验证码登录</button>
-                </div>
-                <div id="pwdLoginPanel">
-                    <div class="input-item"><input type="text" id="accInput" placeholder="账号"></div>
-                    <div class="input-item"><input type="password" id="pwdInput" placeholder="密码"></div>
-                    <div class="input-item"><input type="text" id="activationCodeInput" placeholder="激活码（可选，付费获得）" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);"></div>
-                </div>
-                <div id="phoneLoginPanel" class="hidden">
-                    <div class="input-item"><input type="tel" id="phoneInput" placeholder="手机号码"></div>
-                    <div class="input-item code-row">
-                        <input type="text" id="codeInput" placeholder="验证码">
-                        <button id="getCodeBtn">获取验证码</button>
-                    </div>
-                </div>
-                <div class="btn-row">
-                    <button id="submitBtn">登录</button>
-                    <button id="switchModeBtn">切换注册</button>
-                </div>
-                <div class="text-btn" id="forgetPwdBtn">忘记密码？重置密码</div>
-                <div id="resetPwdWrap" class="hidden">
-                    <div class="section-title">重置密码</div>
-                    <div class="input-item"><input type="text" id="resetAcc" placeholder="账号"></div>
-                    <div class="input-item"><input type="password" id="newPwd" placeholder="新密码"></div>
-                    <div class="btn-row">
-                        <button id="resetSubmit">确认重置</button>
-                        <button id="backLoginBtn">返回登录</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="userManageArea" class="hidden">
-                <div class="section-title">👤 账号信息</div>
-                <p style="font-size:17px;margin:8px 0;">当前账号：<span id="manageUserName"></span></p>
-                <p style="font-size:17px;margin:8px 0;">绑定手机号：<span id="bindPhone">未绑定</span></p>
-                <p style="font-size:17px;margin:8px 0;">会员状态：<span id="vipStatus">普通用户</span></p>
-                <p style="font-size:17px;margin:8px 0;">会员到期时间：<span id="vipExpire">未开通</span></p>
-                <div class="vip-card">
-                    <h4>VIP会员专属权益</h4>
-                    <ul>
-                        <li>无时长使用限制，超长倒计时</li>
-                        <li>多款会员专属主题皮肤切换</li>
-                        <li>多计时器（同时跑多个独立计时）</li>
-                        <li>自定义主题色 + 渐变背景 + 字体主题</li>
-                        <li>分段计时(Laps) 圈速分析</li>
-                        <li>自定义预设模板（无限数量）</li>
-                        <li>扫码分享预设二维码</li>
-                        <li>自定义提示音 / 语音包切换</li>
-                        <li>计时结束全屏庆祝动画</li>
-                        <li>详细统计报表 + 无限历史记录</li>
-                        <li>云端备份与跨设备同步</li>
-                        <li>成就分享卡片（生成图片）</li>
-                        <li>团队协作计时（同步房间）</li>
-                        <li>全部成就徽章自动解锁</li>
-                    </ul>
-                </div>
-                <div class="btn-row">
-                    <button id="openVipBtn" class="vip-btn">开通/续费会员</button>
-                    <button id="logoutBtn">退出登录</button>
-                    <button class="danger-btn" id="delAccountBtn">注销账号</button>
-                </div>
-                <div class="avatar-select-box">
-                    <p style="font-size:17px;">更换头像：</p>
-                    <div class="avatar-list">
-                        <img class="avatar-item" data-src="https://picsum.photos/id/1001/60/60" src="https://picsum.photos/id/1001/60/60">
-                        <img class="avatar-item" data-src="https://picsum.photos/id/1002/60/60" src="https://picsum.photos/id/1002/60/60">
-                        <img class="avatar-item" data-src="https://picsum.photos/id/1003/60/60" src="https://picsum.photos/id/1003/60/60">
-                        <img class="avatar-item" data-src="https://picsum.photos/id/1004/60/60" src="https://picsum.photos/id/1004/60/60">
-                    </div>
-                </div>
-            </div>
-
-            <!-- 计时历史 -->
-            <div class="section-title">📜 计时历史</div>
-            <div id="historyBar" class="notif-bar hidden">
-                您有 <span id="historyCount">0</span> 条计时记录
-                <button id="clearHistoryBtn" style="padding:4px 10px;font-size:12px;">清空</button>
-            </div>
-            <div class="history-list" id="historyList"></div>
-
-            <!-- 成就系统 -->
-            <div class="section-title">🏆 成就系统</div>
-            <div class="achievement-bar" id="achvSummary">
-                <span class="achv-icon">🎖️</span>
-                <div class="achv-info">
-                    <div class="achv-title">累计专注：<span id="achvTotalTime">0 秒</span></div>
-                    <div class="achv-desc">连续使用：<span id="achvStreak">0</span> 天 · 已解锁 <span id="achvUnlocked">0</span>/<span id="achvTotal">0</span> 个成就</div>
-                </div>
-                <div class="achv-progress" id="achvNext">下一个：--</div>
-            </div>
-            <div class="achv-list" id="achvList"></div>
-
-            <!-- 扫码启动预设 -->
-            <div class="section-title">📲 扫码启动预设（分享预设二维码）</div>
-            <div class="qr-gen-wrap">
-                <div class="qr-row">
-                    <label style="font-size:15px;">选择预设：</label>
-                    <select id="qrPresetSelect" style="min-width:160px;"></select>
-                </div>
-                <div class="qr-row">
-                    <label style="font-size:15px;">或自定义：</label>
-                    <input type="number" id="qrCustomM" placeholder="分" min="0" style="width:70px;">
-                    <span>分</span>
-                    <input type="number" id="qrCustomS" placeholder="秒" min="0" style="width:70px;">
-                    <span>秒</span>
-                </div>
-                <button class="settings-btn" id="qrGenerateBtn" style="width:auto;display:inline-block;">
-                    <span class="btn-icon">🔗</span>生成二维码
-                </button>
-            </div>
-            <div class="qr-canvas-box" id="qrCanvasBox" style="display:none;">
-                <canvas id="qrCanvas" width="200" height="200"></canvas>
-                <div class="qr-url" id="qrUrlText"></div>
-                <div class="qr-actions">
-                    <button id="qrDownloadBtn" style="padding:6px 14px;font-size:13px;">下载二维码</button>
-                    <button id="qrCopyLinkBtn" style="padding:6px 14px;font-size:13px;">复制链接</button>
-                </div>
-            </div>
 
             <!-- 开发者面板 -->
             <div class="dev-option" id="devPanel">
@@ -4707,12 +4683,28 @@ function initVipFeatures(){
                 <span class="btn-icon">🐞</span>调试反馈数据
                 <span class="btn-desc">需要密码才能进入 · 查看玩家提交的 Bug 反馈原始数据</span>
             </button>
-
+            </div>
             <!-- 管理员入口（隐藏，保留兼容，不再作为入口） -->
             <button class="settings-btn" id="adminEnterBtn" style="display:none;margin-top:12px;border:1px dashed #ffaa00;background:rgba(255,170,0,0.08);">
                 <span class="btn-icon">🔐</span>管理员 · 查看用户反馈
                 <span class="btn-desc">登录后可查看、删除、导出玩家提交的 Bug 反馈</span>
             </button>
+            <script>
+            (function(){
+              var tabs=document.querySelectorAll('.set-subtab');
+              var panels=document.querySelectorAll('.set-panel');
+              var ph=document.getElementById('setPlaceholder');
+              tabs.forEach(function(tab){
+                tab.addEventListener('click',function(){
+                  tabs.forEach(function(t){t.classList.remove('active');});
+                  tab.classList.add('active');
+                  var k=tab.getAttribute('data-set');
+                  panels.forEach(function(p){p.classList.toggle('hidden',p.getAttribute('data-set')!==k);});
+                  if(ph)ph.classList.add('hidden');
+                });
+              });
+            })();
+            </script>
         </div>
     </div>
 </div>
