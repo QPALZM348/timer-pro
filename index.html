@@ -143,6 +143,8 @@ button:disabled{opacity:0.4;cursor:not-allowed;}
 /* 兑换头像框 */
 .top-avatar.frame-gold{border:2px solid #ffd700;animation:frameGoldPulse 2.2s ease-in-out infinite;}
 .top-avatar.frame-diamond{border:2px solid #7de6e0;animation:frameDiaPulse 2.2s ease-in-out infinite;}
+.top-avatar.frame-svip{border:2px solid #ff006e;animation:frameSvipPulse 1.8s linear infinite;}
+@keyframes frameSvipPulse{0%{border-color:#ff006e;box-shadow:0 0 10px 2px rgba(255,0,110,.7)}25%{border-color:#8338ec;box-shadow:0 0 10px 2px rgba(131,56,236,.7)}50%{border-color:#06ffa5;box-shadow:0 0 10px 2px rgba(6,255,165,.7)}75%{border-color:#ffbe0b;box-shadow:0 0 10px 2px rgba(255,190,11,.7)}100%{border-color:#ff006e;box-shadow:0 0 10px 2px rgba(255,0,110,.7)}}
 @keyframes frameGoldPulse{0%,100%{box-shadow:0 0 6px #ffd700,0 0 12px rgba(255,215,0,.5);}50%{box-shadow:0 0 12px #ffd700,0 0 24px rgba(255,215,0,.85);}}
 @keyframes frameDiaPulse{0%,100%{box-shadow:0 0 6px #7de6e0,0 0 12px rgba(180,144,202,.6);}50%{box-shadow:0 0 12px #b490ca,0 0 26px rgba(125,230,224,.95);}}
 /* 兑换称号徽章 */
@@ -150,6 +152,10 @@ button:disabled{opacity:0.4;cursor:not-allowed;}
 .title-badge.t-newbie{background:linear-gradient(135deg,#43e97b,#38f9d7);color:#064e3b;}
 .title-badge.t-master{background:linear-gradient(135deg,#f6d365,#fda085);color:#7c2d12;}
 .title-badge.t-king{background:linear-gradient(135deg,#ff512f,#b1047e);color:#fff;}
+.title-badge.t-legend{background:linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b);background-size:300% 100%;color:#fff;animation:legendHue 3s linear infinite;box-shadow:0 0 10px rgba(131,56,236,.6);}
+@keyframes legendHue{to{background-position:300% 0;}}
+body.is-svip #time{background:linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b,#ff006e);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:svipTextFlow 4s linear infinite;filter:drop-shadow(0 0 14px rgba(131,56,236,.65));}
+@keyframes svipTextFlow{to{background-position:300% 0;}}
 
 .setting-container{width:100%;text-align:left;}
 .section-title{
@@ -1253,10 +1259,18 @@ function openFriends(){
         { name:'季卡', months:3, price:'38元/季', priceNum:38 },
         { name:'年卡', months:12, price:'128元/年', priceNum:128 }
     ];
+    const svipPlans = [
+        { name:'SVIP日卡', day:1, price:'0.03元/天', priceNum:0.03 },
+        { name:'SVIP月卡', months:1, price:'30元/月', priceNum:30 },
+        { name:'SVIP季卡', months:3, price:'78元/季', priceNum:78 },
+        { name:'SVIP年卡', months:12, price:'258元/年', priceNum:258 }
+    ];
+    let currentTier='vip';
 
     function renderPlans(){
         planWrap.innerHTML='';
-        vipPlans.forEach((item,idx)=>{
+        const planArr=currentTier==='svip'?svipPlans:vipPlans;
+        planArr.forEach((item,idx)=>{
             const div=document.createElement('div');
             div.className=`vip-plan-item ${idx===selectedPlanIndex?'active':''}`;
             div.innerHTML=`<div class="plan-name">${item.name}</div><div class="plan-price">${item.price}</div>`;
@@ -1278,7 +1292,7 @@ function openFriends(){
     modalConfirm.onclick=()=>{
         const user=getUserData();
         if(!user.account)return alert('请先登录账号');
-        const plan=vipPlans[selectedPlanIndex];
+        const plan=(currentTier==='svip'?svipPlans:vipPlans)[selectedPlanIndex];
         payPlanName.innerText=plan.name;
         payPrice.innerText=plan.price;
         selectPayType='';
@@ -1305,7 +1319,7 @@ function openFriends(){
 
     paySubmitBtn.onclick=()=>{
         if(!selectPayType)return alert('请选择支付方式');
-        const plan=vipPlans[selectedPlanIndex];
+        const plan=(currentTier==='svip'?svipPlans:vipPlans)[selectedPlanIndex];
         if(selectPayType==='ali'){alert('暂不支持支付宝，请选微信');return;}
         qrPrice.innerText=`¥${plan.priceNum.toFixed(2)}`;
         payModal.classList.add('hidden');
@@ -1332,8 +1346,13 @@ function openFriends(){
         const now=new Date();
         if(item.day)now.setDate(now.getDate()+item.day);
         else now.setMonth(now.getMonth()+item.months);
-        user.isVip=true;
-        user.vipExpireTime=now.getTime();
+        const ts=now.getTime();
+        if(currentTier==='svip'){
+            user.svip=true;user.svipExpireTime=ts;
+            if(!checkVipValid(user)||(user.vipExpireTime||0)<ts){user.isVip=true;user.vipExpireTime=ts;}
+        }else{
+            user.isVip=true;user.vipExpireTime=ts;
+        }
         saveUserData(user);
     }
 
@@ -1354,15 +1373,16 @@ function openFriends(){
     function renderTitleFrame(){
         var frame=localStorage.getItem('userFrame');
         var av=document.getElementById('topAvatarImg');
-        if(av){av.classList.remove('frame-gold','frame-diamond');
+        if(av){av.classList.remove('frame-gold','frame-diamond','frame-svip');
             if(frame==='gold')av.classList.add('frame-gold');
-            else if(frame==='diamond')av.classList.add('frame-diamond');}
+            else if(frame==='diamond')av.classList.add('frame-diamond');
+            else if(frame==='svip')av.classList.add('frame-svip');}
         var title=localStorage.getItem('userTitle');
         var tb=document.getElementById('topTitleBadge');
         if(tb){
             if(!title){tb.classList.add('hidden');tb.textContent='';}
             else{
-                var cls=title.indexOf('王者')>=0?'t-king':(title.indexOf('大师')>=0?'t-master':'t-newbie');
+                var cls=title.indexOf('永恒')>=0?'t-legend':(title.indexOf('王者')>=0?'t-king':(title.indexOf('大师')>=0?'t-master':'t-newbie'));
                 tb.className='title-badge '+cls;tb.textContent=title;tb.classList.remove('hidden');
             }
         }
@@ -1403,6 +1423,7 @@ function openFriends(){
             userManageArea.classList.add('hidden');
             userTopWrap.classList.add('hidden');
         }
+        document.body.classList.toggle('is-svip',checkSvipValid(user));
         renderSkin();
         updateVipLocks();
         renderTitleFrame();
@@ -1531,7 +1552,13 @@ function openFriends(){
     const avatarItems=document.querySelectorAll('.avatar-item');
     let codeTimer=null,currentCode='',isRegisterMode=false,isPhoneLoginMode=false;
 
-    openVipBtn.onclick=()=>{const u=getUserData();if(!u.account)return alert('请先登录');selectedPlanIndex=0;renderPlans();vipModal.classList.remove('hidden');};
+    openVipBtn.onclick=()=>{const u=getUserData();if(!u.account)return alert('请先登录');currentTier='vip';selectedPlanIndex=0;document.getElementById('vipModalTitle').textContent='VIP会员充值套餐';renderPlans();vipModal.classList.remove('hidden');};
+    const openSvipBtn=document.getElementById('openSvipBtn');
+    if(openSvipBtn)openSvipBtn.onclick=()=>{
+      const u=getUserData();if(!u.account)return alert('请先登录');
+      if(!checkVipValid(u)){alert('升级SVIP前需先开通VIP，正在为你打开VIP套餐');currentTier='vip';selectedPlanIndex=0;document.getElementById('vipModalTitle').textContent='VIP会员充值套餐';renderPlans();vipModal.classList.remove('hidden');return;}
+      currentTier='svip';selectedPlanIndex=0;document.getElementById('vipModalTitle').textContent='SVIP会员升级套餐（含全部VIP特权）';renderPlans();vipModal.classList.remove('hidden');
+    };
     // 激活码激活 VIP
     const activateCodeBtn = document.getElementById('activateCodeBtn');
     if(activateCodeBtn){
@@ -2542,6 +2569,10 @@ function openFriends(){
         {id:'vip_30d', emoji:'👑', name:'兑换VIP会员(30天)', desc:'立即开通30天VIP，享全部特权', price:600, type:'vip', value:'30'},
         {id:'svip_30d', emoji:'💠', name:'兑换SVIP会员(30天) [推荐]', desc:'超级VIP：含全部VIP特权+SVIP专属皮肤与炫彩徽章', price:1500, type:'svip', value:'30'},
         {id:'theme_chaos', emoji:'🌞', name:'混沌神尊皮肤 [SVIP]', desc:'七彩混沌·至尊流动神光', price:1200, type:'theme', value:'chaos'},
+        {id:'theme_genesis', emoji:'🌠', name:'创世星辰皮肤 [SVIP]', desc:'宇宙大爆炸·创世流光（SVIP专属）', price:1500, type:'theme', value:'genesis'},
+        {id:'theme_void', emoji:'☄️', name:'虚空湮灭皮肤 [SVIP]', desc:'暗黑虚空·霓虹湮灭（SVIP专属）', price:1300, type:'theme', value:'voidx'},
+        {id:'title_legend', emoji:'⚡', name:'永恒传说称号 [SVIP]', desc:'至高炫彩称号（SVIP专属）', price:900, type:'title', value:'永恒传说'},
+        {id:'frame_svip', emoji:'💠', name:'炫彩流光头像框 [SVIP]', desc:'至高炫彩流动边框（SVIP专属）', price:800, type:'frame', value:'svip'},
         {id:'bgm_unlock', emoji:'🎵', name:'解锁全部音乐', desc:'解锁所有VIP背景音乐', price:1000, type:'bgm', value:'all'},
     ];
 
@@ -2600,6 +2631,15 @@ function openFriends(){
                 return;
             }
         }
+        // SVIP 必须先开通 VIP
+        if(item.type==='svip' && !checkVipValid(getUserData())){
+            showToast('升级 SVIP 前需先开通 VIP');
+            try{
+                document.querySelector('.tab-btn[data-view="setting"]').click();
+                document.getElementById('openVipBtn').click();
+            }catch(e){}
+            return;
+        }
         // VIP时长卡可重复购买（续费叠加）；其余物品已拥有则拦截
         if(!isVipCard && isPurchased(id)){ showToast('你已经拥有这个物品了'); return; }
         if(!spendPoints(item.price)){ showToast('积分不足，继续努力吧！'); return; }
@@ -2633,7 +2673,9 @@ function openFriends(){
                 golddragon: 'linear-gradient(-45deg, #14141f, #b8860b, #ffd700, #7a5c00, #1a1a2e)',
                 diamondstar: 'linear-gradient(-45deg, #0f2027, #2c5364, #7de6e0, #b490ca, #1a2a6c)',
                 galaxy: 'linear-gradient(-45deg, #000428, #004e92, #7f00ff, #e100ff, #240b36)',
-                chaos: 'linear-gradient(-45deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #fb5607)'
+                chaos: 'linear-gradient(-45deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #fb5607)',
+                genesis: 'linear-gradient(-45deg, #03001e, #7303c0, #ec38bc, #fdeff9, #ff9a00, #00ff87)',
+                voidx: 'linear-gradient(-45deg, #000000, #1a0033, #ff0057, #00e5ff, #09001a)'
             };
             if(themes[item.value]){
                 document.body.style.background = themes[item.value];
@@ -2761,7 +2803,9 @@ function openFriends(){
                 golddragon: 'linear-gradient(-45deg, #14141f, #b8860b, #ffd700, #7a5c00, #1a1a2e)',
                 diamondstar: 'linear-gradient(-45deg, #0f2027, #2c5364, #7de6e0, #b490ca, #1a2a6c)',
                 galaxy: 'linear-gradient(-45deg, #000428, #004e92, #7f00ff, #e100ff, #240b36)',
-                chaos: 'linear-gradient(-45deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #fb5607)'
+                chaos: 'linear-gradient(-45deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #fb5607)',
+                genesis: 'linear-gradient(-45deg, #03001e, #7303c0, #ec38bc, #fdeff9, #ff9a00, #00ff87)',
+                voidx: 'linear-gradient(-45deg, #000000, #1a0033, #ff0057, #00e5ff, #09001a)'
             };
             if(themes[savedTheme]){
                 document.body.style.background = themes[savedTheme];
@@ -3778,7 +3822,7 @@ function initVipFeatures(){
 <!-- VIP弹窗 -->
 <div class="modal-mask hidden" id="vipModal">
     <div class="modal-box">
-        <h3 class="modal-title">VIP会员充值套餐</h3>
+        <h3 class="modal-title" id="vipModalTitle">VIP会员充值套餐</h3>
         <div class="vip-plan-wrap" id="planWrap"></div>
         <div style="margin:15px 0;padding:12px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:8px;">
             <p style="font-size:14px;color:#ffd700;margin-bottom:8px;">🎫 已有激活码？</p>
@@ -4127,14 +4171,19 @@ function initVipFeatures(){
     var fx=food.x*CELL,fy=food.y*CELL;
     ctx.fillStyle='#ff4d6d';
     ctx.beginPath();ctx.arc(fx+CELL/2,fy+CELL/2,CELL*0.36,0,Math.PI*2);ctx.fill();
+    // SVIP 星光拖尾
+    var svipNow=(function(){try{var u=JSON.parse(localStorage.getItem('timerUser')||'{}');return !!u.svip&&(u.svipExpireTime||0)>Date.now();}catch(e){return false;}})();
     // 蛇
+    if(svipNow)ctx.shadowBlur=14;
     for(var j=snake.length-1;j>=0;j--){
       var s=snake[j],t=j/Math.max(snake.length-1,1);
-      if(j===0){ctx.fillStyle='#7CFFD0';}
+      if(svipNow){var hue=Math.floor((Date.now()/12+j*26)%360);ctx.shadowColor='hsl('+hue+',100%,60%)';ctx.fillStyle='hsl('+hue+',95%,62%)';}
+      else if(j===0){ctx.fillStyle='#7CFFD0';}
       else{var g=Math.round(229-t*90);ctx.fillStyle='rgb(0,'+g+',160)';}
       var pad=1.5;
       roundRect(s.x*CELL+pad,s.y*CELL+pad,CELL-pad*2,CELL-pad*2,5);ctx.fill();
     }
+    ctx.shadowBlur=0;
     // 蛇眼睛
     var h0=snake[0],dd=DIRS[dir],cx=h0.x*CELL+CELL/2,cy=h0.y*CELL+CELL/2;
     ctx.fillStyle='#062b22';
@@ -4434,7 +4483,8 @@ function initVipFeatures(){
                     </ul>
                 </div>
                 <div class="btn-row">
-                    <button id="openVipBtn" class="vip-btn">开通/续费会员</button>
+                    <button id="openVipBtn" class="vip-btn">开通/续费 VIP</button>
+                    <button id="openSvipBtn" class="vip-btn" style="background:linear-gradient(135deg,#e100ff,#7f00ff);">💠 升级 SVIP</button>
                     <button id="logoutBtn">退出登录</button>
                     <button class="danger-btn" id="delAccountBtn">注销账号</button>
                 </div>
