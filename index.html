@@ -1604,6 +1604,7 @@ function openFriends(){
             if(!code)return alert('请输入激活码');
             const VIP_CODES = ['TIMER-PRO-8888','VIP-6666-9999','PRO-2024-8888','TP-VIP-88888','计时器PRO-VIP'];
             const SVIP_CODES = ['SVIP-8888-2026','TIMER-SVIP-9999'];
+            const POINT_CODES = {'POINTS-10000':10000,'WELCOME-10000':10000};
             const up = code.toUpperCase();
             const u = getUserData();
             if(!u.account){ alert('请先登录或注册账号，再使用激活码'); return; }
@@ -1619,6 +1620,13 @@ function openFriends(){
                 localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');
                 refreshUserUI();updateVipLocks();
                 alert('🎉 VIP激活成功！所有VIP功能已解锁');
+                vipModal.classList.add('hidden');if(codeInput)codeInput.value='';
+            }else if(POINT_CODES[up]){
+                var __pt=POINT_CODES[up];
+                try{window.addPoints(__pt);}catch(e){localStorage.setItem('userPoints',String((parseInt(localStorage.getItem('userPoints')||'0',10)||0)+__pt));}
+                try{refreshUserUI();}catch(e){}
+                var __pd=document.getElementById('userPointsDisplay');if(__pd)__pd.textContent=window.getPoints();
+                alert('🎁 积分兑换成功！已到账 '+__pt+' 积分');
                 vipModal.classList.add('hidden');if(codeInput)codeInput.value='';
             }else{
                 alert('激活码无效，请检查后重试');
