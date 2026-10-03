@@ -138,6 +138,8 @@ button:disabled{opacity:0.4;cursor:not-allowed;}
     position:absolute;bottom:-4px;right:-4px;
     background:#ff4444;color:#fff;font-size:10px;padding:2px 4px;border-radius:4px;font-weight:bold;
 }
+.svip-badge{position:absolute;bottom:-5px;right:-5px;background:linear-gradient(135deg,#ffd700,#ff006e,#8338ec);color:#fff;font-size:9px;padding:2px 5px;border-radius:5px;font-weight:bold;animation:svipShine 2s ease-in-out infinite;}
+@keyframes svipShine{0%,100%{box-shadow:0 0 6px rgba(255,215,0,.7);}50%{box-shadow:0 0 14px rgba(255,0,110,.95);}}
 /* 兑换头像框 */
 .top-avatar.frame-gold{border:2px solid #ffd700;animation:frameGoldPulse 2.2s ease-in-out infinite;}
 .top-avatar.frame-diamond{border:2px solid #7de6e0;animation:frameDiaPulse 2.2s ease-in-out infinite;}
@@ -1205,8 +1207,13 @@ function openFriends(){
     // ============ 工具函数 ============
     function getUserData(){return JSON.parse(localStorage.getItem('timerUser')) || {};}
     function saveUserData(obj){localStorage.setItem('timerUser', JSON.stringify(obj));}
+    function checkSvipValid(user){
+        if(!user || !user.svip || !user.svipExpireTime) return false;
+        return Date.now() < user.svipExpireTime;
+    }
     function checkVipValid(user){
         if(localStorage.getItem('devForceVipSkin') === 'true') return true;
+        if(checkSvipValid(user)) return true;        // SVIP 享有 VIP 全部权益
         if(!user.isVip||!user.vipExpireTime)return false;
         return Date.now() < user.vipExpireTime;
     }
@@ -1322,6 +1329,7 @@ function openFriends(){
     const topAvatarImg=document.getElementById('topAvatarImg');
     const topUserName=document.getElementById('topUserName');
     const topVipBadge=document.getElementById('topVipBadge');
+    const topSvipBadge=document.getElementById('topSvipBadge');
     const loginArea=document.getElementById('loginArea');
     const userManageArea=document.getElementById('userManageArea');
     const manageUserName=document.getElementById('manageUserName');
@@ -1355,17 +1363,26 @@ function openFriends(){
             bindPhone.textContent=user.phone||'未绑定';
             topUserName.textContent=user.account;
             topAvatarImg.src=user.avatar||'';
+            const svipValid=checkSvipValid(user);
             const vipValid=checkVipValid(user);
-            if(vipValid){
+            if(svipValid){
+                vipStatus.textContent='SVIP会员';
+                vipStatus.style.color='#ffd700';
+                vipExpire.textContent=new Date(user.svipExpireTime).toLocaleString();
+                if(topSvipBadge)topSvipBadge.classList.remove('hidden');
+                topVipBadge.classList.add('hidden');
+            }else if(vipValid){
                 vipStatus.textContent='VIP会员';
                 vipStatus.style.color='#ff4444';
                 vipExpire.textContent=new Date(user.vipExpireTime).toLocaleString();
                 topVipBadge.classList.remove('hidden');
+                if(topSvipBadge)topSvipBadge.classList.add('hidden');
             }else{
                 vipStatus.textContent='普通用户';
                 vipStatus.style.color='#fff';
                 vipExpire.textContent='未开通或已过期';
                 topVipBadge.classList.add('hidden');
+                if(topSvipBadge)topSvipBadge.classList.add('hidden');
                 if(user.isVip){user.isVip=false;user.vipExpireTime=null;saveUserData(user);}
             }
         }else{
@@ -1509,15 +1526,23 @@ function openFriends(){
             const codeInput = document.getElementById('vipActivationCode');
             const code = codeInput ? codeInput.value.trim() : '';
             if(!code)return alert('请输入激活码');
-            const VALID_CODES = ['TIMER-PRO-8888','VIP-6666-9999','PRO-2024-8888','TP-VIP-88888','计时器PRO-VIP'];
-            if(VALID_CODES.includes(code.toUpperCase())){
-                const u=getUserData();
-                u.isVip=true;u.vipExpireTime='2099-12-31';saveUserData(u);
+            const VIP_CODES = ['TIMER-PRO-8888','VIP-6666-9999','PRO-2024-8888','TP-VIP-88888','计时器PRO-VIP'];
+            const SVIP_CODES = ['SVIP-8888-2026','TIMER-SVIP-9999'];
+            const up = code.toUpperCase();
+            const u = getUserData();
+            const FOREVER = new Date('2099-12-31T23:59:59').getTime();
+            if(SVIP_CODES.includes(up)){
+                u.svip=true;u.svipExpireTime=FOREVER;u.isVip=true;u.vipExpireTime=FOREVER;saveUserData(u);
+                localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');
+                refreshUserUI();updateVipLocks();
+                alert('💠 SVIP激活成功！凌驾VIP的全部特权已解锁');
+                vipModal.classList.add('hidden');if(codeInput)codeInput.value='';
+            }else if(VIP_CODES.includes(up)){
+                u.isVip=true;u.vipExpireTime=FOREVER;saveUserData(u);
                 localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');
                 refreshUserUI();updateVipLocks();
                 alert('🎉 VIP激活成功！所有VIP功能已解锁');
-                vipModal.classList.add('hidden');
-                if(codeInput)codeInput.value='';
+                vipModal.classList.add('hidden');if(codeInput)codeInput.value='';
             }else{
                 alert('激活码无效，请检查后重试');
             }
@@ -1537,30 +1562,36 @@ function openFriends(){
     switchModeBtn.onclick=()=>{isRegisterMode=!isRegisterMode;submitBtn.textContent=isRegisterMode?'注册':'登录';switchModeBtn.textContent=isRegisterMode?'切换登录':'切换注册';};
     submitBtn.onclick=()=>{
         const u=getUserData();
-        // 激活码验证（预设激活码，付费后由官方发放）
-        const VALID_ACTIVATION_CODES = ['TIMER-PRO-8888','VIP-6666-9999','PRO-2024-8888','TP-VIP-88888','计时器PRO-VIP'];
-        const actCode = document.getElementById('activationCodeInput') ? document.getElementById('activationCodeInput').value.trim() : '';
-        let activateVip = false;
+        const AC_VIP=['TIMER-PRO-8888','VIP-6666-9999','PRO-2024-8888','TP-VIP-88888','计时器PRO-VIP'];
+        const AC_SVIP=['SVIP-8888-2026','TIMER-SVIP-9999'];
+        const actCode=document.getElementById('activationCodeInput')?document.getElementById('activationCodeInput').value.trim():'';
+        const AC_FOREVER=new Date('2099-12-31T23:59:59').getTime();
+        let vipLevel=0;
         if(actCode){
-            if(VALID_ACTIVATION_CODES.includes(actCode.toUpperCase())){
-                activateVip = true;
-            }else{
-                alert('激活码无效，请检查后重试');
-                return;
-            }
+            const acu=actCode.toUpperCase();
+            if(AC_SVIP.includes(acu))vipLevel=2;
+            else if(AC_VIP.includes(acu))vipLevel=1;
+            else {alert('激活码无效，请检查后重试');return;}
         }
+        function grantLevel(obj){
+            if(vipLevel===2){obj.svip=true;obj.svipExpireTime=AC_FOREVER;obj.isVip=true;obj.vipExpireTime=AC_FOREVER;}
+            else if(vipLevel===1){obj.isVip=true;obj.vipExpireTime=AC_FOREVER;}
+            return obj;
+        }
+        function markVipStorage(){if(vipLevel>0){localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}}
+        const levelTxt=vipLevel===2?'SVIP':(vipLevel===1?'VIP':null);
         if(isPhoneLoginMode){
             const p=phoneInput.value.trim(),c=codeInput.value.trim();
             if(!p)return alert('填写手机号');if(c!==currentCode)return alert('验证码错误');
             if(isRegisterMode){
                 if(u.account)return alert('已登录账号，请退出');
-                const nu={account:p,password:'',phone:p,avatar:'https://picsum.photos/id/1001/60/60',isVip:activateVip,vipExpireTime:activateVip?'2099-12-31':null};
-                saveUserData(nu);alert(activateVip?'注册成功，VIP已激活！':'注册成功自动登录');refreshUserUI();phoneInput.value=codeInput.value='';currentCode='';
-                if(activateVip){localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}
+                const nu=grantLevel({account:p,password:'',phone:p,avatar:'https://picsum.photos/id/1001/60/60',isVip:false,vipExpireTime:null});
+                saveUserData(nu);alert(levelTxt?('注册成功，'+levelTxt+'已激活！'):'注册成功自动登录');refreshUserUI();phoneInput.value=codeInput.value='';currentCode='';
+                markVipStorage();
             }else{
                 if(u.phone===p||u.account===p){
-                    if(activateVip){u.isVip=true;u.vipExpireTime='2099-12-31';saveUserData(u);localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}
-                    alert(activateVip?'登录成功，VIP已激活！':'登录成功');refreshUserUI();phoneInput.value=codeInput.value='';currentCode='';
+                    grantLevel(u);saveUserData(u);markVipStorage();
+                    alert(levelTxt?('登录成功，'+levelTxt+'已激活！'):'登录成功');refreshUserUI();phoneInput.value=codeInput.value='';currentCode='';
                 }else alert('手机号未注册');
             }
             return;
@@ -1569,13 +1600,13 @@ function openFriends(){
         if(!acc||!pwd)return alert('账号密码不能为空');
         if(isRegisterMode){
             if(u.account)return alert('账号已存在');
-            const nu={account:acc,password:pwd,phone:'',avatar:'https://picsum.photos/id/1001/60/60',isVip:activateVip,vipExpireTime:activateVip?'2099-12-31':null};
-            saveUserData(nu);alert(activateVip?'注册成功，VIP已激活！':'注册成功');isRegisterMode=false;submitBtn.textContent='登录';switchModeBtn.textContent='切换注册';accInput.value=pwdInput.value='';
-            if(activateVip){localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}
+            const nu=grantLevel({account:acc,password:pwd,phone:'',avatar:'https://picsum.photos/id/1001/60/60',isVip:false,vipExpireTime:null});
+            saveUserData(nu);alert(levelTxt?('注册成功，'+levelTxt+'已激活！'):'注册成功');isRegisterMode=false;submitBtn.textContent='登录';switchModeBtn.textContent='切换注册';accInput.value=pwdInput.value='';
+            markVipStorage();
         }else{
             if(u.account===acc&&u.password===pwd){
-                if(activateVip){u.isVip=true;u.vipExpireTime='2099-12-31';saveUserData(u);localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}
-                alert(activateVip?'登录成功，VIP已激活！':'登录成功');refreshUserUI();accInput.value=pwdInput.value='';
+                grantLevel(u);saveUserData(u);markVipStorage();
+                alert(levelTxt?('登录成功，'+levelTxt+'已激活！'):'登录成功');refreshUserUI();accInput.value=pwdInput.value='';
             }else alert('账号密码错误');
         }
         if(actCode)document.getElementById('activationCodeInput').value='';
@@ -2495,6 +2526,8 @@ function openFriends(){
         {id:'theme_diamondstar', emoji:'💠', name:'钻石星辰皮肤 [VIP]', desc:'冰蓝紫钻·璀璨星光', price:400, type:'theme', value:'diamondstar'},
         {id:'theme_galaxy', emoji:'🌌', name:'银河至尊皮肤 [VIP]', desc:'深邃银河·紫电流光', price:500, type:'theme', value:'galaxy'},
         {id:'vip_30d', emoji:'👑', name:'兑换VIP会员(30天)', desc:'立即开通30天VIP，享全部特权', price:600, type:'vip', value:'30'},
+        {id:'svip_30d', emoji:'💠', name:'兑换SVIP会员(30天) [推荐]', desc:'超级VIP：含全部VIP特权+SVIP专属皮肤与炫彩徽章', price:1500, type:'svip', value:'30'},
+        {id:'theme_chaos', emoji:'🌞', name:'混沌神尊皮肤 [SVIP]', desc:'七彩混沌·至尊流动神光', price:1200, type:'theme', value:'chaos'},
         {id:'bgm_unlock', emoji:'🎵', name:'解锁全部音乐', desc:'解锁所有VIP背景音乐', price:1000, type:'bgm', value:'all'},
     ];
 
@@ -2540,7 +2573,7 @@ function openFriends(){
     function buyItem(id){
         const item = SHOP_ITEMS.find(i=>i.id===id);
         if(!item) return;
-        const isVipCard = item.type === 'vip';
+        const isVipCard = (item.type==='vip'||item.type==='svip');
         // VIP时长卡可重复购买（续费叠加）；其余物品已拥有则拦截
         if(!isVipCard && isPurchased(id)){ showToast('你已经拥有这个物品了'); return; }
         if(!spendPoints(item.price)){ showToast('积分不足，继续努力吧！'); return; }
@@ -2550,7 +2583,7 @@ function openFriends(){
             savePurchasedItems(purchased);
         }
         applyShopItem(item);
-        showToast(isVipCard ? ('👑 VIP已延长 '+(item.value||'')+' 天') : ('🎉 成功兑换：'+item.name));
+        showToast(isVipCard ? ((item.type==='svip'?'💠 SVIP':'👑 VIP')+'已延长 '+(item.value||'')+' 天') : ('🎉 成功兑换：'+item.name));
         renderShop();
     }
     window.buyItem = buyItem;
@@ -2573,7 +2606,8 @@ function openFriends(){
                 night: 'linear-gradient(-45deg, #0f0c29, #302b63, #24243e)',
                 golddragon: 'linear-gradient(-45deg, #14141f, #b8860b, #ffd700, #7a5c00, #1a1a2e)',
                 diamondstar: 'linear-gradient(-45deg, #0f2027, #2c5364, #7de6e0, #b490ca, #1a2a6c)',
-                galaxy: 'linear-gradient(-45deg, #000428, #004e92, #7f00ff, #e100ff, #240b36)'
+                galaxy: 'linear-gradient(-45deg, #000428, #004e92, #7f00ff, #e100ff, #240b36)',
+                chaos: 'linear-gradient(-45deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #fb5607)'
             };
             if(themes[item.value]){
                 document.body.style.background = themes[item.value];
@@ -2603,6 +2637,18 @@ function openFriends(){
             localStorage.setItem('isVip','1');
             try{ refreshUserUI(); updateVipLocks(); }catch(e){}
             showToast('👑 已开通VIP '+days+' 天，全部特权已解锁！');
+        } else if(item.type === 'svip'){
+            const sdays = parseInt(item.value,10) || 30;
+            const su = getUserData();
+            const sbase = (checkSvipValid(su)&&su.svipExpireTime) ? new Date(su.svipExpireTime) : new Date();
+            sbase.setDate(sbase.getDate()+sdays);
+            su.svip = true; su.svipExpireTime = sbase.getTime();
+            // SVIP 期内同步覆盖 VIP 权益
+            if(!checkVipValid(su) || (su.vipExpireTime||0) < su.svipExpireTime){ su.isVip=true; su.vipExpireTime=su.svipExpireTime; }
+            saveUserData(su);
+            localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');
+            try{ refreshUserUI(); updateVipLocks(); }catch(e){}
+            showToast('💠 已开通SVIP '+sdays+' 天，凌驾VIP的全部特权已解锁！');
         }
     }
 
@@ -2688,7 +2734,8 @@ function openFriends(){
                 night: 'linear-gradient(-45deg, #0f0c29, #302b63, #24243e)',
                 golddragon: 'linear-gradient(-45deg, #14141f, #b8860b, #ffd700, #7a5c00, #1a1a2e)',
                 diamondstar: 'linear-gradient(-45deg, #0f2027, #2c5364, #7de6e0, #b490ca, #1a2a6c)',
-                galaxy: 'linear-gradient(-45deg, #000428, #004e92, #7f00ff, #e100ff, #240b36)'
+                galaxy: 'linear-gradient(-45deg, #000428, #004e92, #7f00ff, #e100ff, #240b36)',
+                chaos: 'linear-gradient(-45deg, #ff006e, #8338ec, #3a86ff, #06ffa5, #ffbe0b, #fb5607)'
             };
             if(themes[savedTheme]){
                 document.body.style.background = themes[savedTheme];
@@ -3794,6 +3841,7 @@ function initVipFeatures(){
     <div style="position:relative;">
         <img class="top-avatar" id="topAvatarImg">
         <span class="vip-badge hidden" id="topVipBadge">VIP</span>
+        <span class="svip-badge hidden" id="topSvipBadge">SVIP</span>
     </div>
     <span id="topUserName"></span>
     <span class="title-badge hidden" id="topTitleBadge"></span>
