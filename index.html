@@ -392,6 +392,13 @@ body.fullscreen-mode .fs-exit-float{display:flex;}
 .set-group .settings-btn .btn-desc{margin-top:4px;line-height:1.35;}
 @media(max-width:520px){.set-group{grid-template-columns:1fr;}}
 
+.set-subtabs{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px;}
+.set-subtab{padding:8px 14px;border-radius:20px;border:1px solid var(--border-color);background:rgba(0,0,0,.2);color:var(--main-color);font-size:14px;cursor:pointer;transition:.2s;}
+.set-subtab:hover{background:rgba(0,40,80,.3);}
+.set-subtab.active{background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(106,17,203,.4);}
+.set-placeholder{text-align:center;color:#9aa;font-size:14px;padding:42px 16px;border:1px dashed var(--border-color);border-radius:12px;margin-bottom:16px;}
+.set-panel{margin-bottom:16px;}
+
 /* 导出弹窗 */
 .export-modal{width:90%;max-width:600px;}
 .export-textarea{
@@ -4353,9 +4360,18 @@ function initVipFeatures(){
               </div>
             </details>
 
-            <!-- ========== 设置页功能（已分类） ========== -->
-            <div class="section-title">🖥️ 通用与显示</div>
-            <div class="set-group">
+            <!-- ========== 设置页功能（子标签切换） ========== -->
+            <div class="set-subtabs">
+              <button class="set-subtab" data-set="general">🖥️ 通用显示</button>
+              <button class="set-subtab" data-set="growth">🎮 成长积分</button>
+              <button class="set-subtab" data-set="social">👥 好友社交</button>
+              <button class="set-subtab" data-set="data">💾 数据记录</button>
+              <button class="set-subtab" data-set="vip">👑 会员专属</button>
+              <button class="set-subtab" data-set="help">🛠️ 帮助其他</button>
+            </div>
+            <div class="set-placeholder" id="setPlaceholder">👆 请点击上方分类，下面才会显示对应功能</div>
+            <div class="set-panel hidden" data-set="general">
+              <div class="set-group">
                 <button class="settings-btn" id="setFullscreenEnter" data-show="not-fullscreen">
                                 <span class="btn-icon">⛶</span>进入全屏
                                 <span class="btn-desc">进入沉浸全屏模式，按 F11 也可切换</span>
@@ -4377,8 +4393,9 @@ function initVipFeatures(){
                                 <span class="btn-desc" id="musicDesc">5首精选音乐，前2首免费</span>
                             </button>
             </div>
-            <div class="section-title">🎮 成长与积分</div>
-            <div class="set-group">
+            </div>
+            <div class="set-panel hidden" data-set="growth">
+              <div class="set-group">
                 <button class="settings-btn" id="setAchievements">
                                     <span class="btn-icon">🏆</span>成就墙
                                     <span class="btn-desc">查看等级、经验和解锁的成就</span>
@@ -4396,8 +4413,9 @@ function initVipFeatures(){
                                     <span class="btn-desc">完成任务获取经验奖励</span>
                                 </button>
             </div>
-            <div class="section-title">👥 好友与社交</div>
-            <div class="set-group">
+            </div>
+            <div class="set-panel hidden" data-set="social">
+              <div class="set-group">
                 <button class="settings-btn" id="setFriends">
                                 <span class="btn-icon">👥</span>好友列表
                                 <span class="btn-desc">管理你的好友，本地保存</span>
@@ -4415,8 +4433,9 @@ function initVipFeatures(){
                                     <span class="btn-desc">看看好友们都在做什么</span>
                                 </button>
             </div>
-            <div class="section-title">💾 数据与记录</div>
-            <div class="set-group">
+            </div>
+            <div class="set-panel hidden" data-set="data">
+              <div class="set-group">
                 <button class="settings-btn" id="setExportLaps">
                                 <span class="btn-icon">📊</span>导出分段计时记录
                                 <span class="btn-desc">将 Laps 数据导出为 CSV 或复制到剪贴板</span>
@@ -4430,9 +4449,10 @@ function initVipFeatures(){
                                 <span class="btn-desc">仅清除计时历史/分段/预设，保留 VIP、皮肤、设置等</span>
                             </button>
             </div>
-            <div class="section-title">👑 会员专属功能</div>
-            <p style="font-size:13px;color:#f99;margin:0 0 10px;">以下功能为 VIP/SVIP 专享，开通会员即可一键解锁全部</p>
-            <div class="set-group">
+            </div>
+            <div class="set-panel hidden" data-set="vip">
+              <p style="font-size:13px;color:#f99;margin:0 0 10px;">以下功能为 VIP/SVIP 专享，开通会员即可一键解锁全部</p>
+              <div class="set-group">
                 <button class="settings-btn vip-lock" id="setMultiTimer">
                                 <span class="btn-icon">🕐</span>多计时器
                                 <span class="btn-desc">同时运行多个独立计时器，VIP 专享</span>
@@ -4478,8 +4498,9 @@ function initVipFeatures(){
                                 <span class="btn-desc">加入房间，多人同步同一计时器</span>
                             </button>
             </div>
-            <div class="section-title">🛠️ 帮助与其他</div>
-            <div class="set-group">
+            </div>
+            <div class="set-panel hidden" data-set="help">
+              <div class="set-group">
                 <button class="settings-btn" id="setFeedback">
                                 <span class="btn-icon">🐛</span>反馈 Bug
                                 <span class="btn-desc">遇到问题？提交反馈，开发者会认真查看每一条</span>
@@ -4489,7 +4510,23 @@ function initVipFeatures(){
                                 <span class="btn-desc">需要密码才能进入（普通用户请勿点击）</span>
                             </button>
             </div>
-
+            </div>
+            <script>
+            (function(){
+              var tabs=document.querySelectorAll('.set-subtab');
+              var panels=document.querySelectorAll('.set-panel');
+              var ph=document.getElementById('setPlaceholder');
+              tabs.forEach(function(tab){
+                tab.addEventListener('click',function(){
+                  tabs.forEach(function(t){t.classList.remove('active');});
+                  tab.classList.add('active');
+                  var k=tab.getAttribute('data-set');
+                  panels.forEach(function(p){p.classList.toggle('hidden',p.getAttribute('data-set')!==k);});
+                  if(ph)ph.classList.add('hidden');
+                });
+              });
+            })();
+            </script>
 
             <!-- 主题皮肤设置 -->
             <div class="section-title">🎨 主题皮肤设置</div>
