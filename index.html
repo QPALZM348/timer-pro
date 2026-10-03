@@ -1530,6 +1530,7 @@ function openFriends(){
             const SVIP_CODES = ['SVIP-8888-2026','TIMER-SVIP-9999'];
             const up = code.toUpperCase();
             const u = getUserData();
+            if(!u.account){ alert('请先登录或注册账号，再使用激活码'); return; }
             const FOREVER = new Date('2099-12-31T23:59:59').getTime();
             if(SVIP_CODES.includes(up)){
                 u.svip=true;u.svipExpireTime=FOREVER;u.isVip=true;u.vipExpireTime=FOREVER;saveUserData(u);
@@ -2574,6 +2575,18 @@ function openFriends(){
         const item = SHOP_ITEMS.find(i=>i.id===id);
         if(!item) return;
         const isVipCard = (item.type==='vip'||item.type==='svip');
+        // 会员类商品必须先登录账号，避免会员写进无身份对象
+        if(isVipCard){
+            const __cu = getUserData();
+            if(!__cu.account){
+                showToast('请先登录或注册账号，再兑换会员');
+                try{
+                    document.querySelector('.tab-btn[data-view="setting"]').click();
+                    document.getElementById('loginArea').scrollIntoView({behavior:'smooth'});
+                }catch(e){}
+                return;
+            }
+        }
         // VIP时长卡可重复购买（续费叠加）；其余物品已拥有则拦截
         if(!isVipCard && isPurchased(id)){ showToast('你已经拥有这个物品了'); return; }
         if(!spendPoints(item.price)){ showToast('积分不足，继续努力吧！'); return; }
