@@ -4593,10 +4593,13 @@ function initVipFeatures(){
                   el.checked=localStorage.getItem(key)!=='0';
                   el.addEventListener('change',function(){
                     localStorage.setItem(key,el.checked?'1':'0');
+                    var u={};try{u=JSON.parse(localStorage.getItem('timerUser')||'{}');}catch(e){}
+                    var svipNow2=!!u.svip&&(u.svipExpireTime||0)>Date.now();
                     if(key==='svipEff:time'){
-                      var u={};try{u=JSON.parse(localStorage.getItem('timerUser')||'{}');}catch(e){}
-                      var on=el.checked&&!!u.svip&&(u.svipExpireTime||0)>Date.now();
-                      document.body.classList.toggle('svip-eff-time',on);
+                      document.body.classList.toggle('svip-eff-time',svipNow2&&el.checked);
+                    }else if(key==='svipEff:badge'){
+                      var bdg=document.getElementById('topSvipBadge');
+                      if(bdg)bdg.classList.toggle('hidden',!(svipNow2&&el.checked));
                     }
                   });
                 }
