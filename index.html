@@ -1489,6 +1489,7 @@ function openFriends(){
         updateVipLocks();
         renderTitleFrame();
         renderSvipStage();
+        try{updatePointsUI();}catch(e){}
     }
 
     // ============ VIP 锁状态更新 ============
