@@ -413,6 +413,15 @@ body.fullscreen-mode .fs-exit-float{display:flex;}
   animation:legendHue 3s linear infinite;}
 .svip-sw{display:flex;align-items:center;gap:9px;font-size:14px;color:#eee;padding:9px 4px;cursor:pointer;}
 .svip-sw input{width:17px;height:17px;accent-color:#b14dff;}
+.svip-feat{display:flex;align-items:center;gap:9px;font-size:13.5px;color:#eee;padding:8px 4px;cursor:pointer;border-radius:8px;}
+.svip-feat input{width:16px;height:16px;accent-color:#b14dff;}
+.svip-feat.locked{color:#8a7aa8;cursor:not-allowed;}
+.svip-feat-icon{width:16px;text-align:center;}
+.svip-feat-name{flex:1;}
+.svip-feat-lock{font-size:11px;color:#c084fc;background:rgba(131,56,236,.18);padding:2px 7px;border-radius:10px;white-space:nowrap;}
+.svip-fire-btn{width:100%;margin-top:10px;padding:9px;border:none;border-radius:9px;cursor:pointer;font-size:14px;font-weight:bold;color:#fff;background:linear-gradient(135deg,#ff006e,#8338ec,#3a86ff);box-shadow:0 4px 12px rgba(131,56,236,.4);}
+body.svip-eff-breathe #time{animation:svipBreathe 2.4s ease-in-out infinite;}
+@keyframes svipBreathe{0%,100%{text-shadow:0 0 14px rgba(255,92,230,.5),0 0 30px rgba(131,56,236,.35)}50%{text-shadow:0 0 28px rgba(255,92,230,.95),0 0 58px rgba(131,56,236,.75)}}
 body.svip-eff-name #topUserName{background:linear-gradient(90deg,#ff006e,#8338ec,#3a86ff,#06ffa5,#ffbe0b,#ff006e);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;animation:legendHue 3s linear infinite;font-weight:bold;}
 body.svip-eff-btn .settings-btn,body.svip-eff-btn .tab-btn{animation:svipBtnBorder 3s linear infinite;}
 @keyframes svipBtnBorder{0%{border-color:#ff006e;box-shadow:0 0 8px rgba(255,0,110,.35)}25%{border-color:#8338ec;box-shadow:0 0 8px rgba(131,56,236,.35)}50%{border-color:#06ffa5;box-shadow:0 0 8px rgba(6,255,165,.35)}75%{border-color:#ffbe0b;box-shadow:0 0 8px rgba(255,190,11,.35)}100%{border-color:#ff006e;box-shadow:0 0 8px rgba(255,0,110,.35)}}
@@ -1433,7 +1442,7 @@ function openFriends(){
                 vipStatus.textContent='SVIP.'+(user.svipLevel||1)+' 会员';
                 vipStatus.style.color='#ffd700';
                 vipExpire.textContent=new Date(user.svipExpireTime).toLocaleString();
-                if(topSvipBadge){topSvipBadge.classList.toggle('hidden',localStorage.getItem('svipEff:badge')==='0');var __lv=user.svipLevel||1;topSvipBadge.textContent='SVIP.'+__lv;topSvipBadge.classList.toggle('svip-max',__lv>=10);}
+                if(topSvipBadge){topSvipBadge.classList.toggle('hidden',!svipFeatOn('badge',user));var __lv=user.svipLevel||1;topSvipBadge.textContent='SVIP.'+__lv;topSvipBadge.classList.toggle('svip-max',__lv>=10);}
                 topVipBadge.classList.add('hidden');
             }else if(vipValid){
                 vipStatus.textContent='VIP会员';
@@ -1455,10 +1464,12 @@ function openFriends(){
             userTopWrap.classList.add('hidden');
         }
         document.body.classList.toggle('is-svip',checkSvipValid(user));
-        document.body.classList.toggle('svip-eff-time',checkSvipValid(user)&&localStorage.getItem('svipEff:time')!=='0');
-        document.body.classList.toggle('svip-eff-name',checkSvipValid(user)&&localStorage.getItem('svipEff:name')!=='0');
-        document.body.classList.toggle('svip-eff-btn',checkSvipValid(user)&&localStorage.getItem('svipEff:btn')!=='0');
-        document.body.classList.toggle('svip-eff-particle',checkSvipValid(user)&&localStorage.getItem('svipEff:particle')!=='0');
+        document.body.classList.toggle('svip-eff-time',svipFeatOn('time',user));
+        document.body.classList.toggle('svip-eff-name',svipFeatOn('name',user));
+        document.body.classList.toggle('svip-eff-btn',svipFeatOn('btn',user));
+        document.body.classList.toggle('svip-eff-particle',svipFeatOn('particle',user));
+        document.body.classList.toggle('svip-eff-breathe',svipFeatOn('breathe',user));
+        if(topUserName&&user.account)topUserName.textContent=svipFeatOn('crown',user)?('👑 '+user.account):user.account;
         renderSkin();
         updateVipLocks();
         renderTitleFrame();
@@ -2725,18 +2736,76 @@ function openFriends(){
     window.equipItem = equipItem;
 
     const SVIP_UP_COST=[0,200,400,600,800,1000,1300,1600,2000,2500];
+    const SVIP_FEATURES=[
+      {key:'badge',name:'💠 SVIP 炫彩徽章',unlock:1,toggle:true},
+      {key:'time',name:'🔢 计时数字五彩流光',unlock:2,toggle:true},
+      {key:'snake',name:'🐍 贪吃蛇彩虹星光拖尾',unlock:3,toggle:true},
+      {key:'name',name:'✨ 用户名炫彩流光',unlock:4,toggle:true},
+      {key:'btn',name:'🌈 全局按钮炫彩描边',unlock:5,toggle:true},
+      {key:'particle',name:'💫 背景星光粒子',unlock:6,toggle:true},
+      {key:'click',name:'🎆 点击光环跟随',unlock:7,toggle:true},
+      {key:'breathe',name:'🔆 计时数字呼吸光晕',unlock:8,toggle:true},
+      {key:'firework',name:'🎇 全屏礼花庆典',unlock:9,toggle:true},
+      {key:'crown',name:'👑 至尊永恒（满级专属）',unlock:10,toggle:false}
+    ];
+    window.SVIP_FEATURES=SVIP_FEATURES;
+    function svipFeatOn(key,u){
+      u=u||getUserData();
+      if(!checkSvipValid(u))return false;
+      var lv=u.svipLevel||1,f=null;
+      for(var i=0;i<SVIP_FEATURES.length;i++)if(SVIP_FEATURES[i].key===key)f=SVIP_FEATURES[i];
+      if(!f||lv<f.unlock)return false;
+      return localStorage.getItem('svipEff:'+key)!=='0';
+    }
+    window.svipFeatOn=svipFeatOn;
+    function svipFireworks(){
+      var c=document.createElement('canvas');
+      c.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:9998';
+      document.body.appendChild(c);c.width=innerWidth;c.height=innerHeight;
+      var x=c.getContext('2d'),parts=[];
+      function burst(cx,cy){for(var i=0;i<55;i++){var a=Math.random()*6.283,sp=Math.random()*6+2;parts.push({x:cx,y:cy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:60+Math.random()*30,h:Math.random()*360});}}
+      burst(innerWidth*.3,innerHeight*.35);burst(innerWidth*.65,innerHeight*.3);burst(innerWidth*.5,innerHeight*.55);
+      function loop(){x.clearRect(0,0,c.width,c.height);var alive=false;
+        for(var i=0;i<parts.length;i++){var p=parts[i];p.x+=p.vx;p.y+=p.vy;p.vy+=.08;p.life--;
+          if(p.life>0){alive=true;x.fillStyle='hsla('+p.h+',95%,65%,'+Math.min(1,p.life/70)+')';x.beginPath();x.arc(p.x,p.y,2.4,0,7);x.fill();}}
+        if(alive)requestAnimationFrame(loop);else c.remove();}
+      requestAnimationFrame(loop);
+    }
+    window.svipFireworks=svipFireworks;
     function renderSvipStage(){
       var u=getUserData();var cur=document.getElementById('svipStageCur');
       if(!cur)return;
       var valid=checkSvipValid(u);var lv=valid?(u.svipLevel||1):0;
       var fill=document.getElementById('svipStageFill'),hint=document.getElementById('svipStageHint'),btn=document.getElementById('svipUpgradeBtn');
+      var list=document.getElementById('svipFeatList');
       if(!valid){
         cur.textContent='未开通 SVIP';cur.style.color='#888';fill.style.width='0';
-        hint.textContent='先开通 SVIP，即可从 1 阶段开始成长';btn.disabled=true;return;
+        hint.textContent='先开通 SVIP，即可从 1 阶段开始，逐级解锁专属特效';btn.disabled=true;
+        if(list)list.innerHTML='';return;
       }
       cur.textContent='SVIP.'+lv+' 会员';cur.style.color='#ffd700';fill.style.width=(lv*10)+'%';
-      if(lv>=10){hint.textContent='🏆 已达 SVIP 满级 10，尊享全部最强特效';btn.disabled=true;}
-      else{hint.textContent='升到 SVIP.'+(lv+1)+' 需消耗 '+SVIP_UP_COST[lv]+' 积分（特效随阶段增强）';btn.disabled=false;}
+      if(lv>=10){hint.textContent='🏆 已达 SVIP 满级 10，全部 10 项特权已解锁';btn.disabled=true;}
+      else{hint.textContent='升到 SVIP.'+(lv+1)+'（'+SVIP_UP_COST[lv]+'积分）解锁：'+SVIP_FEATURES[lv].name;btn.disabled=false;}
+      if(list){
+        list.innerHTML='';
+        SVIP_FEATURES.forEach(function(f){
+          var unlocked=lv>=f.unlock;
+          var row=document.createElement('label');row.className='svip-feat'+(unlocked?'':' locked');
+          if(f.toggle){
+            var cb=document.createElement('input');cb.type='checkbox';
+            cb.checked=unlocked&&localStorage.getItem('svipEff:'+f.key)!=='0';cb.disabled=!unlocked;
+            cb.addEventListener('change',function(){localStorage.setItem('svipEff:'+f.key,cb.checked?'1':'0');try{refreshUserUI();}catch(e){}});
+            row.appendChild(cb);
+          }else{
+            var sp=document.createElement('span');sp.className='svip-feat-icon';sp.textContent=unlocked?'👑':'🔒';row.appendChild(sp);
+          }
+          var nm=document.createElement('span');nm.className='svip-feat-name';nm.textContent=f.name;row.appendChild(nm);
+          if(!unlocked){var lk=document.createElement('span');lk.className='svip-feat-lock';lk.textContent='SVIP.'+f.unlock+' 解锁';row.appendChild(lk);}
+          list.appendChild(row);
+        });
+      }
+      var fb=document.getElementById('svipFireBtn');
+      if(fb)fb.classList.toggle('hidden',!(lv>=9));
     }
     function svipUpgrade(){
       var u=getUserData();
@@ -2747,13 +2816,17 @@ function openFriends(){
       var cost=SVIP_UP_COST[lv];
       if(getPoints()<cost)return showToast('积分不足，需要 '+cost+' 积分');
       spendPoints(cost);u.svipLevel=lv+1;saveUserData(u);
-      showToast('🎉 已提升至 SVIP.'+(lv+1));
+      var fn=SVIP_FEATURES[lv];
+      showToast('🎉 已提升至 SVIP.'+(lv+1)+'，解锁：'+fn.name);
       try{refreshUserUI();}catch(e){}
       renderSvipStage();
+      if((lv+1)>=9&&localStorage.getItem('svipEff:firework')!=='0')svipFireworks();
     }
     window.svipUpgrade=svipUpgrade;
     var __svipUpBtn=document.getElementById('svipUpgradeBtn');
     if(__svipUpBtn)__svipUpBtn.onclick=svipUpgrade;
+    var __fireBtn=document.getElementById('svipFireBtn');
+    if(__fireBtn)__fireBtn.onclick=function(){if(svipFeatOn('firework'))svipFireworks();};
 
     function applyShopItem(item){
         if(item.type === 'theme'){
@@ -4266,12 +4339,12 @@ function initVipFeatures(){
     ctx.fillStyle='#ff4d6d';
     ctx.beginPath();ctx.arc(fx+CELL/2,fy+CELL/2,CELL*0.36,0,Math.PI*2);ctx.fill();
     // SVIP 星光拖尾
-    var svipNow=(function(){try{var u=JSON.parse(localStorage.getItem('timerUser')||'{}');return !!u.svip&&(u.svipExpireTime||0)>Date.now()&&localStorage.getItem('svipEff:snake')!=='0';}catch(e){return false;}})();
+    var svipNow=function(){return !!(window.svipFeatOn&&window.svipFeatOn('snake'));};
     // 蛇
-    if(svipNow)ctx.shadowBlur=14;
+    if(svipNow())ctx.shadowBlur=14;
     for(var j=snake.length-1;j>=0;j--){
       var s=snake[j],t=j/Math.max(snake.length-1,1);
-      if(svipNow){var hue=Math.floor((Date.now()/12+j*26)%360);ctx.shadowColor='hsl('+hue+',100%,60%)';ctx.fillStyle='hsl('+hue+',95%,62%)';}
+      if(svipNow()){var hue=Math.floor((Date.now()/12+j*26)%360);ctx.shadowColor='hsl('+hue+',100%,60%)';ctx.fillStyle='hsl('+hue+',95%,62%)';}
       else if(j===0){ctx.fillStyle='#7CFFD0';}
       else{var g=Math.round(229-t*90);ctx.fillStyle='rgb(0,'+g+',160)';}
       var pad=1.5;
@@ -4649,13 +4722,8 @@ function initVipFeatures(){
                   <div class="svip-stage-hint" id="svipStageHint"></div>
                   <button id="svipUpgradeBtn">⬆️ 提升 SVIP 阶段（消耗积分）</button>
                 </div>
-                <label class="svip-sw"><input type="checkbox" id="svipEffTime" checked> 🔢 计时数字五彩流光</label>
-                <label class="svip-sw"><input type="checkbox" id="svipEffSnake" checked> 🐍 贪吃蛇彩虹星光拖尾</label>
-                <label class="svip-sw"><input type="checkbox" id="svipEffBadge" checked> 💠 SVIP 炫彩徽章</label>
-                <label class="svip-sw"><input type="checkbox" id="svipEffName" checked> ✨ 用户名炫彩流光</label>
-                <label class="svip-sw"><input type="checkbox" id="svipEffBtn" checked> 🌈 全局按钮炫彩描边</label>
-                <label class="svip-sw"><input type="checkbox" id="svipEffParticle" checked> 💫 背景星光粒子</label>
-                <label class="svip-sw"><input type="checkbox" id="svipEffClick" checked> 🎆 点击光环跟随</label>
+                <div id="svipFeatList"></div>
+                <button id="svipFireBtn" class="svip-fire-btn hidden">🎇 放个礼花庆祝</button>
               </div>
               <script>
               (function(){
@@ -4709,7 +4777,7 @@ function initVipFeatures(){
                 requestAnimationFrame(loop);
                 document.addEventListener('click',function(e){
                   var u={};try{u=JSON.parse(localStorage.getItem('timerUser')||'{}');}catch(ex){}
-                  if(!(u.svip&&(u.svipExpireTime||0)>Date.now()&&localStorage.getItem('svipEff:click')!=='0'))return;
+                  if(!(window.svipFeatOn&&window.svipFeatOn('click')))return;
                   var d=document.createElement('div');d.className='svip-click-ripple';
                   d.style.left=e.clientX+'px';d.style.top=e.clientY+'px';
                   document.body.appendChild(d);setTimeout(function(){d.remove();},650);
