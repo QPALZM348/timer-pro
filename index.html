@@ -134,6 +134,12 @@ button:disabled{opacity:0.4;cursor:not-allowed;}
     width:44px;height:44px;border-radius:50%;
     border:2px solid var(--main-color);object-fit:cover;position:relative;
 }
+.uti-text{display:flex;flex-direction:column;align-items:flex-end;gap:4px;}
+.uti-name-row{display:flex;align-items:center;gap:7px;max-width:46vw;}
+.uti-name-row #topUserName{max-width:34vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.uti-pts{font-size:12px;color:#ffd700;font-weight:bold;background:rgba(0,0,0,.32);padding:2px 9px;border-radius:10px;white-space:nowrap;}
+.top-avatar-fb{display:none;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:18px;background:linear-gradient(135deg,#7f00ff,#e100ff);}
+.top-avatar-fb.show{display:flex;}
 .vip-badge{
     position:absolute;bottom:-4px;right:-4px;
     background:#ff4444;color:#fff;font-size:10px;padding:2px 4px;border-radius:4px;font-weight:bold;
@@ -1435,7 +1441,16 @@ function openFriends(){
             manageUserName.textContent=user.account;
             bindPhone.textContent=user.phone||'未绑定';
             topUserName.textContent=user.account;
-            topAvatarImg.src=user.avatar||'';
+            (function(){
+                var fb=document.getElementById('topAvatarFallback');
+                fb.textContent=(user.account||'用').charAt(0).toUpperCase();
+                topAvatarImg.onerror=function(){topAvatarImg.classList.add('hidden');fb.classList.add('show');};
+                if(user.avatar){
+                    topAvatarImg.src=user.avatar;topAvatarImg.classList.remove('hidden');fb.classList.remove('show');
+                }else{
+                    topAvatarImg.removeAttribute('src');topAvatarImg.classList.add('hidden');fb.classList.add('show');
+                }
+            })();
             const svipValid=checkSvipValid(user);
             const vipValid=checkVipValid(user);
             if(svipValid){
@@ -2600,6 +2615,8 @@ function openFriends(){
     function updatePointsUI(){
         const el = document.getElementById('userPointsDisplay');
         if(el) el.textContent = getPoints();
+        const t2 = document.getElementById('topPointsDisplay');
+        if(t2) t2.textContent = getPoints();
     }
     window.getPoints = getPoints;
     window.addPoints = addPoints;
@@ -4076,13 +4093,19 @@ function initVipFeatures(){
 
 <!-- 用户信息栏 -->
 <div class="user-top-info hidden" id="userTopWrap">
+    <div class="uti-text">
+        <div class="uti-name-row">
+            <span id="topUserName"></span>
+            <span class="title-badge hidden" id="topTitleBadge"></span>
+        </div>
+        <div class="uti-pts">💰 <span id="topPointsDisplay">0</span></div>
+    </div>
     <div style="position:relative;">
-        <img class="top-avatar" id="topAvatarImg">
+        <img class="top-avatar" id="topAvatarImg" alt="">
+        <div class="top-avatar top-avatar-fb" id="topAvatarFallback"></div>
         <span class="vip-badge hidden" id="topVipBadge">VIP</span>
         <span class="svip-badge hidden" id="topSvipBadge">SVIP</span>
     </div>
-    <span id="topUserName"></span>
-    <span class="title-badge hidden" id="topTitleBadge"></span>
 </div>
 
 <!-- 主导航 -->
