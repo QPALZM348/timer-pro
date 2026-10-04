@@ -1438,6 +1438,7 @@ function openFriends(){
         if(user.account){
             loginArea.classList.add('hidden');
             userManageArea.classList.remove('hidden');
+            userTopWrap.classList.remove('hidden');
             manageUserName.textContent=user.account;
             bindPhone.textContent=user.phone||'未绑定';
             topUserName.textContent=user.account;
