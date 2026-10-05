@@ -1733,12 +1733,13 @@ function openFriends(){
         const AC_SVIP=['SVIP-8888-2026','TIMER-SVIP-9999'];
         const actCode=document.getElementById('activationCodeInput')?document.getElementById('activationCodeInput').value.trim():'';
         const AC_FOREVER=new Date('2099-12-31T23:59:59').getTime();
-        let vipLevel=0;
+        let vipLevel=0;let otherCode=null;
+        function __afterCode(){if(otherCode){var rr=window.redeemAfterAuth?window.redeemAfterAuth(otherCode):{ok:false,msg:'兑换功能未就绪，请登录后在收银台兑换'};alert(rr.ok?('兑换成功：'+rr.msg):rr.msg);otherCode=null;try{refreshUserUI();}catch(e){}}}
         if(actCode){
             const acu=actCode.toUpperCase();
             if(AC_SVIP.includes(acu))vipLevel=2;
             else if(AC_VIP.includes(acu))vipLevel=1;
-            else {alert('激活码无效，请检查后重试');return;}
+            else otherCode=acu;
         }
         function grantLevel(obj){
             if(vipLevel===2){obj.svip=true;obj.svipExpireTime=AC_FOREVER;obj.isVip=true;obj.vipExpireTime=AC_FOREVER;if(!obj.svipLevel||obj.svipLevel<1)obj.svipLevel=1;}
@@ -1754,7 +1755,7 @@ function openFriends(){
                 if(u.account)return alert('已登录账号，请退出');
                 const nu=grantLevel({account:p,password:'',phone:p,avatar:'https://picsum.photos/id/1001/60/60',isVip:false,vipExpireTime:null});
                 saveUserData(nu);alert(levelTxt?('注册成功，'+levelTxt+'已激活！'):'注册成功自动登录');refreshUserUI();phoneInput.value=codeInput.value='';currentCode='';
-                markVipStorage();
+                markVipStorage();__afterCode();
             }else{
                 if(u.phone===p||u.account===p){
                     grantLevel(u);saveUserData(u);markVipStorage();
@@ -2906,6 +2907,16 @@ function openFriends(){
       return su;
     }
     window.grantSvipDays=grantSvipDays;
+    window.redeemAfterAuth=function(code){
+      code=(code||'').toUpperCase();
+      var ot=(window.svipVerifyOneTime?window.svipVerifyOneTime(code):null);
+      if(ot){if(ot.used)return {ok:false,msg:'该激活码已被使用，无法重复开通'};window.svipConsumeCode(ot.code,ot.days);return {ok:true,msg:'SVIP已激活 '+ot.days+' 天'};}
+      var PLAN={'SVIP-M-153':30,'SVIP-Q-200':90,'SVIP-Y-360':365};
+      if(PLAN[code]){window.grantSvipDays(PLAN[code]);return {ok:true,msg:'SVIP套餐已激活 '+PLAN[code]+' 天'};}
+      var PC={'POINTS-10000':10000,'WELCOME-10000':10000};
+      if(PC[code]){window.addPoints(PC[code]);return {ok:true,msg:PC[code]+' 积分已到账'};}
+      return {ok:false,msg:'激活码无效，请检查格式，或登录后在收银台兑换'};
+    };
     try{window.getUserData=getUserData;window.saveUserData=saveUserData;window.checkSvipValid=checkSvipValid;window.checkVipValid=checkVipValid;window.renderSvipStage=renderSvipStage;}catch(e){}
     window.svipUpgrade=svipUpgrade;
     var __svipUpBtn=document.getElementById('svipUpgradeBtn');
@@ -4690,7 +4701,7 @@ function initVipFeatures(){
                 <div id="pwdLoginPanel">
                     <div class="input-item"><input type="text" id="accInput" placeholder="账号"></div>
                     <div class="input-item"><input type="password" id="pwdInput" placeholder="密码"></div>
-                    <div class="input-item"><input type="text" id="activationCodeInput" placeholder="激活码（可选，付费获得）" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);"></div>
+                    <div class="input-item"><input type="text" id="activationCodeInput" placeholder="激活码/兑换码（可选）" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);"></div>
                 </div>
                 <div id="phoneLoginPanel" class="hidden">
                     <div class="input-item"><input type="tel" id="phoneInput" placeholder="手机号码"></div>
