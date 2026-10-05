@@ -1671,7 +1671,7 @@ function openFriends(){
     if(activateCodeBtn){
         activateCodeBtn.onclick=()=>{
             const codeInput = document.getElementById('vipActivationCode');
-            const code = codeInput ? codeInput.value.trim() : '';
+            const code = codeInput ? codeInput.value.trim().replace(/\s+/g,'') : '';
             if(!code)return alert('请输入激活码');
             const VIP_CODES = ['TIMER-PRO-8888','VIP-6666-9999','PRO-2024-8888','TP-VIP-88888','计时器PRO-VIP'];
             const SVIP_CODES = ['SVIP-8888-2026','TIMER-SVIP-9999'];
@@ -2908,7 +2908,7 @@ function openFriends(){
     }
     window.grantSvipDays=grantSvipDays;
     window.redeemAfterAuth=function(code){
-      code=(code||'').toUpperCase();
+      code=(code||'').toUpperCase().replace(/\s+/g,'');
       var ot=(window.svipVerifyOneTime?window.svipVerifyOneTime(code):null);
       if(ot){if(ot.used)return {ok:false,msg:'该激活码已被使用，无法重复开通'};window.svipConsumeCode(ot.code,ot.days);return {ok:true,msg:'SVIP已激活 '+ot.days+' 天'};}
       var PLAN={'SVIP-M-153':30,'SVIP-Q-200':90,'SVIP-Y-360':365};
@@ -6282,7 +6282,7 @@ function initVipFeatures(){
   modal.addEventListener('click',function(e){if(e.target===modal)close();});
   function safeRefresh(){try{window.refreshUserUI();window.updateVipLocks();window.renderSvipStage();}catch(e){}}
   document.getElementById('spRedeem').addEventListener('click',function(){
-    var c=codeInput.value.trim().toUpperCase();
+    var c=codeInput.value.trim().toUpperCase().replace(/\s+/g,'');
     if(!c){alert('请输入激活码');return;}
     var u=window.getUserData?window.getUserData():{};
     if(!u.account){alert('请先登录账号再激活');return;}
@@ -6301,7 +6301,9 @@ function initVipFeatures(){
       u.svip=true;u.svipExpireTime=F;u.isVip=true;u.vipExpireTime=F;if(!u.svipLevel||u.svipLevel<1)u.svipLevel=1;window.saveUserData(u);
       localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');
       alert('💠 SVIP永久激活成功！');close();safeRefresh();
-    }else{alert('激活码无效。套餐码格式：SVIP-M-153 / SVIP-Q-200 / SVIP-Y-360');}
+    }else{
+      alert('激活码无效。请确认：① 已完整复制、没有多余空格或漏字符；② 一次性码形如 SVIP-Y-XXXXXXXXXX（每次不同）；③ 套餐码 SVIP-M-153 / SVIP-Q-200 / SVIP-Y-360。仍失败请联系开发者。');
+    }
   });
 })();
 </script>
@@ -6355,7 +6357,7 @@ function initVipFeatures(){
     return null;
   }
   function verifyOneTime(rawc){
-    var c=(rawc||'').toUpperCase();
+    var c=(rawc||'').toUpperCase().replace(/\s+/g,'');
     var m=c.match(/^SVIP-([MQY])-([A-Z2-7]{10})$/);if(!m)return null;
     var body=m[2],r=body.slice(0,5),sg=body.slice(5);
     if(sg!==sign(m[1]+r).slice(0,5))return null;
