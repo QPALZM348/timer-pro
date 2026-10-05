@@ -470,6 +470,23 @@ body.svip-eff-particle #svipStarCanvas{display:block;}
 .sp-code-row input{flex:1;min-width:0;padding:9px;border-radius:8px;border:1px solid rgba(7,193,96,.4);background:rgba(0,0,0,.35);color:#fff;font-size:13px;}
 .sp-code-row button{border:none;border-radius:8px;padding:0 14px;font-size:13px;font-weight:bold;color:#fff;background:linear-gradient(135deg,#07c160,#22d37a);cursor:pointer;}
 .sp-contact{font-size:11px;color:#999;margin-top:10px;line-height:1.6;}
+.sa-entry{margin-top:12px;width:100%;border:1px dashed rgba(255,255,255,.25);background:transparent;color:#999;font-size:12px;padding:7px;border-radius:8px;cursor:pointer;}
+#svipAdminModal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;}
+#svipAdminModal.hidden{display:none;}
+.svip-admin-box{position:relative;width:100%;max-width:440px;max-height:94vh;overflow:auto;background:linear-gradient(160deg,#1b1b2f,#10101c);border:1px solid rgba(127,0,255,.4);border-radius:16px;padding:22px 18px;color:#fff;}
+.sa-sub{font-size:12px;color:#bbb;margin:8px 0 12px;}
+.sa-gen{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;}
+.sa-gen select,.sa-actions select{flex:1;min-width:0;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.35);color:#fff;font-size:13px;}
+.sa-btn{border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:bold;color:#fff;background:linear-gradient(135deg,#7f00ff,#e100ff);cursor:pointer;}
+.sa-btn.ghost{background:transparent;border:1px solid rgba(255,255,255,.25);color:#ddd;font-weight:normal;}
+.sa-actions{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.sa-stat{font-size:12px;color:#ffd700;margin-bottom:8px;}
+.sa-list{max-height:340px;overflow:auto;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:6px;}
+.sa-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;}
+.sa-code{font-family:monospace;word-break:break-all;text-align:left;flex:1;}
+.sa-st{font-size:11px;padding:2px 8px;border-radius:8px;white-space:nowrap;}
+.sa-st.unused{background:rgba(7,193,96,.2);color:#46e08a;}
+.sa-st.used{background:rgba(255,80,80,.18);color:#ff8a8a;}
 .svip-badge.svip-max{background:linear-gradient(90deg,#ffd700,#ff5ce6,#ffd700);background-size:200% 100%;animation:svipMaxShine 1.5s linear infinite;color:#1a0033;}
 @keyframes svipMaxShine{to{background-position:200% 0;}}
 
@@ -1660,6 +1677,12 @@ function openFriends(){
             const SVIP_CODES = ['SVIP-8888-2026','TIMER-SVIP-9999'];
             const POINT_CODES = {'POINTS-10000':10000,'WELCOME-10000':10000};
             const SVIP_PLAN_CODES = {'SVIP-M-153':30,'SVIP-Q-200':90,'SVIP-Y-360':365};
+            const __otc=window.svipVerifyOneTime?window.svipVerifyOneTime(up):null;
+            if(__otc){
+                if(__otc.used){alert('该激活码已被使用，无法重复开通');}
+                else{window.svipConsumeCode(__otc.code,__otc.days);alert('💠 SVIP激活成功！已开通 '+__otc.days+' 天');vipModal.classList.add('hidden');if(codeInput)codeInput.value='';}
+                return;
+            }
             const up = code.toUpperCase();
             const u = getUserData();
             if(!u.account){ alert('请先登录或注册账号，再使用激活码'); return; }
@@ -4802,6 +4825,7 @@ function initVipFeatures(){
                       <div class="pc-price">¥360</div><button class="pc-pay">微信支付</button>
                     </div>
                   </div>
+                  <button id="svipAdminBtn" class="sa-entry" type="button">🎛 发卡管理（仅开发者）</button>
                 </div>
                 <div class="svip-stage-box">
                   <div class="svip-stage-head"><span id="svipStageCur">未开通 SVIP</span><span class="svip-stage-tip">阶段 1~10 · 满级 SVIP.10</span></div>
@@ -6251,6 +6275,12 @@ function initVipFeatures(){
     if(!c){alert('请输入激活码');return;}
     var u=window.getUserData?window.getUserData():{};
     if(!u.account){alert('请先登录账号再激活');return;}
+    var __ot=window.svipVerifyOneTime(c);
+    if(__ot){
+      if(__ot.used){alert('该激活码已被使用，无法重复开通');return;}
+      window.svipConsumeCode(__ot.code,__ot.days);
+      alert('💠 SVIP激活成功！已开通 '+__ot.days+' 天');close();safeRefresh();return;
+    }
     if(PLAN_CODE[c]){
       window.grantSvipDays(PLAN_CODE[c]);
       alert('💠 SVIP套餐激活成功！已开通 '+PLAN_CODE[c]+' 天');
@@ -6261,6 +6291,118 @@ function initVipFeatures(){
       localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');
       alert('💠 SVIP永久激活成功！');close();safeRefresh();
     }else{alert('激活码无效。套餐码格式：SVIP-M-153 / SVIP-Q-200 / SVIP-Y-360');}
+  });
+})();
+</script>
+<div id="svipAdminModal" class="hidden">
+ <div class="svip-admin-box">
+  <button class="sp-close" id="svipAdminClose" type="button">&times;</button>
+  <div id="svipAdminLogin">
+    <div class="sp-title">🎛 发卡管理</div>
+    <p class="sa-sub">仅开发者本人，请输入管理密码</p>
+    <div class="sp-code-row"><input id="svipAdminPass" type="password" placeholder="管理密码"><button id="svipAdminLoginBtn" type="button">进入</button></div>
+  </div>
+  <div id="svipAdminPanel" class="hidden">
+    <div class="sa-gen">
+      <select id="saPlan"><option value="M">月卡(30天)</option><option value="Q">季卡(90天)</option><option value="Y">年卡(365天)</option></select>
+      <select id="saNum"><option>5</option><option selected>10</option><option>20</option><option>50</option><option>100</option></select>
+      <button id="saGenBtn" class="sa-btn" type="button">生成</button>
+    </div>
+    <div class="sa-actions">
+      <button id="saCopyBtn" class="sa-btn ghost" type="button">复制未用码</button>
+      <button id="saDownloadBtn" class="sa-btn ghost" type="button">下载txt</button>
+      <select id="saFilter"><option value="all">全部</option><option value="unused">未使用</option><option value="used">已使用</option></select>
+    </div>
+    <div class="sa-stat" id="saStat"></div>
+    <div class="sa-list" id="saList"></div>
+  </div>
+ </div>
+</div>
+<script>
+(function(){
+  var ISSUE_KEY='svipIssuedCodes',USED_KEY='svipUsedCodes',ADMIN_PASS='123456';
+  var DAYS={M:30,Q:90,Y:365};
+  function sign(text){
+    var s1='fk9x27tpQ'+text,s2=text+'z7Qp2xk9f',h=2166136261,i;
+    for(i=0;i<s1.length;i++){h^=s1.charCodeAt(i);h=Math.imul(h,16777619);}
+    for(i=0;i<s2.length;i++){h^=s2.charCodeAt(i);h=Math.imul(h,2246822519);}
+    var v=(h>>>0).toString(32).toUpperCase();while(v.length<5)v='0'+v;return v;
+  }
+  function randR(){var c='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',o='',i;for(i=0;i<5;i++)o+=c[Math.floor(Math.random()*c.length)];return o;}
+  function getIssued(){try{return JSON.parse(localStorage.getItem(ISSUE_KEY))||[];}catch(e){return[];}}
+  function setIssued(a){localStorage.setItem(ISSUE_KEY,JSON.stringify(a));}
+  function getUsed(){try{return JSON.parse(localStorage.getItem(USED_KEY))||[];}catch(e){return[];}}
+  function isUsed(code){return getUsed().some(function(x){return x.code===code;});}
+  function genOne(plan){
+    var issued=getIssued(),k,c,r;
+    for(k=0;k<12;k++){
+      r=randR();c='SVIP-'+plan+'-'+r+sign(plan+r).slice(0,5);
+      if(!issued.some(function(x){return x.code===c;}))return c;
+    }
+    return null;
+  }
+  function verifyOneTime(rawc){
+    var c=(rawc||'').toUpperCase();
+    var m=c.match(/^SVIP-([MQY])-([A-Z2-7]{10})$/);if(!m)return null;
+    var body=m[2],r=body.slice(0,5),sg=body.slice(5);
+    if(sg!==sign(m[1]+r).slice(0,5))return null;
+    return {days:DAYS[m[1]],used:isUsed(c),code:c};
+  }
+  function consume(rawc,days){
+    var c=rawc.toUpperCase();
+    var used=getUsed();if(!used.some(function(x){return x.code===c;})){used.push({code:c,time:new Date().toLocaleString()});localStorage.setItem(USED_KEY,JSON.stringify(used));}
+    if(window.grantSvipDays)window.grantSvipDays(days);
+    var issued=getIssued(),hit=null,i;
+    for(i=0;i<issued.length;i++){if(issued[i].code===c){hit=issued[i];break;}}
+    if(hit){hit.used=true;hit.useTime=new Date().toLocaleString();setIssued(issued);}
+  }
+  window.svipVerifyOneTime=verifyOneTime;
+  window.svipConsumeCode=consume;
+
+  var modal=document.getElementById('svipAdminModal');
+  function closeM(){modal.classList.add('hidden');}
+  document.getElementById('svipAdminBtn').addEventListener('click',function(){modal.classList.remove('hidden');});
+  document.getElementById('svipAdminClose').addEventListener('click',closeM);
+  modal.addEventListener('click',function(e){if(e.target===modal)closeM();});
+  document.getElementById('svipAdminLoginBtn').addEventListener('click',function(){
+    var p=document.getElementById('svipAdminPass').value;
+    if(p===ADMIN_PASS){document.getElementById('svipAdminLogin').classList.add('hidden');document.getElementById('svipAdminPanel').classList.remove('hidden');render();}
+    else alert('管理密码错误');
+  });
+  document.getElementById('svipAdminPass').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('svipAdminLoginBtn').click();});
+  function render(){
+    var issued=getIssued(),f=document.getElementById('saFilter').value,i;
+    var list=issued.filter(function(x){return f==='all'?true:(f==='used'?x.used:!x.used);});
+    var un=issued.filter(function(x){return !x.used;}).length;
+    document.getElementById('saStat').textContent='共 '+issued.length+' 个，未使用 '+un+' 个，已使用 '+(issued.length-un)+' 个';
+    var box=document.getElementById('saList');box.innerHTML='';
+    list.slice().reverse().forEach(function(x){
+      var row=document.createElement('div');row.className='sa-row';
+      row.innerHTML='<span class="sa-code">'+x.code+'</span><span class="sa-st '+(x.used?'used':'unused')+'">'+(x.used?'已用':'未用')+'</span>';
+      box.appendChild(row);
+    });
+    if(!list.length)box.innerHTML='<div class="sa-sub" style="text-align:center;padding:14px">暂无码，先在上方生成</div>';
+  }
+  document.getElementById('saFilter').addEventListener('change',render);
+  document.getElementById('saGenBtn').addEventListener('click',function(){
+    var plan=document.getElementById('saPlan').value,num=parseInt(document.getElementById('saNum').value,10)||10,k,c;
+    var issued=getIssued();
+    for(k=0;k<num;k++){
+      c=genOne(plan);
+      if(c)issued.push({code:c,plan:plan,days:DAYS[plan],genTime:new Date().toLocaleString(),used:false,useTime:''});
+    }
+    setIssued(issued);render();alert('已生成 '+num+' 个 '+({M:'月卡',Q:'季卡',Y:'年卡'})[plan]+'激活码');
+  });
+  function unusedText(){return getIssued().filter(function(x){return !x.used;}).map(function(x){return x.code;}).join('\n');}
+  document.getElementById('saCopyBtn').addEventListener('click',function(){
+    var t=unusedText();if(!t){alert('没有未使用的码');return;}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){alert('已复制全部未用码');});}
+    else{var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('已复制');}
+  });
+  document.getElementById('saDownloadBtn').addEventListener('click',function(){
+    var t=unusedText();if(!t){alert('没有未使用的码');return;}
+    var blob=new Blob([t],{type:'text/plain;charset=utf-8'});var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);a.download='svip-激活码-'+new Date().toISOString().slice(0,10)+'.txt';a.click();
   });
 })();
 </script>
