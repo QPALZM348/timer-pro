@@ -5238,6 +5238,9 @@ function initVipFeatures(){
         <div style="text-align:center;padding:12px;background:rgba(255,215,0,0.1);border-radius:10px;margin-bottom:16px;">
             <span style="color:#ffd700;font-size:18px;font-weight:bold;">💰 我的积分：<span id="userPointsDisplay">0</span></span>
         </div>
+        <div style="text-align:center;margin-bottom:14px;">
+            <button id="openPointsRedeem" type="button" style="border:1px solid rgba(255,215,0,.5);background:rgba(255,215,0,.12);color:#ffd700;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer;">🎁 输入积分兑换码</button>
+        </div>
         <div id="shopItems" style="max-height:350px;overflow-y:auto;margin-bottom:16px;"></div>
         <div style="font-size:12px;color:#999;text-align:center;margin-bottom:12px;">
             💡 完成成就、每日任务、计时都可以获得积分
@@ -5247,6 +5250,41 @@ function initVipFeatures(){
         </div>
     </div>
 </div>
+<div class="modal-mask hidden" id="pointsRedeemModal">
+  <div class="modal-box" style="max-width:400px;background:linear-gradient(135deg,#1a1d36,#2d1b4e);border:1px solid rgba(255,215,0,.35);">
+    <h3 class="modal-title" style="color:#ffd700;">🎁 积分兑换码</h3>
+    <p style="text-align:center;color:#bbb;font-size:13px;margin:0 0 14px;">输入兑换码，积分立即到账</p>
+    <input id="pointsCodeInput" type="text" placeholder="请输入积分兑换码" style="width:100%;box-sizing:border-box;padding:11px;border-radius:9px;border:1px solid rgba(255,215,0,.4);background:rgba(0,0,0,.3);color:#fff;font-size:14px;margin-bottom:16px;">
+    <div class="modal-btn-row">
+      <button id="pointsRedeemSubmit" type="button" style="background:linear-gradient(135deg,#f7971e,#ffd200);color:#3a2c00;">立即兑换</button>
+      <button id="pointsRedeemCancel" type="button" style="background:linear-gradient(135deg,#6a11cb,#2575fc);">取消</button>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+ var modal=document.getElementById('pointsRedeemModal');
+ var input=document.getElementById('pointsCodeInput');
+ var CODES={'POINTS-10000':10000,'WELCOME-10000':10000};
+ document.getElementById('openPointsRedeem').addEventListener('click',function(){input.value='';modal.classList.remove('hidden');});
+ function closeM(){modal.classList.add('hidden');}
+ document.getElementById('pointsRedeemCancel').addEventListener('click',closeM);
+ modal.addEventListener('click',function(e){if(e.target===modal)closeM();});
+ document.getElementById('pointsRedeemSubmit').addEventListener('click',function(){
+   var c=input.value.trim().toUpperCase().replace(/\s+/g,'');
+   if(!c){alert('请输入兑换码');return;}
+   if(CODES[c]){
+     if(window.addPoints)window.addPoints(CODES[c]);
+     else localStorage.setItem('userPoints',String((parseInt(localStorage.getItem('userPoints')||'0',10)||0)+CODES[c]));
+     try{if(window.updatePointsUI)window.updatePointsUI();}catch(e){}
+     var pts=window.getPoints?window.getPoints():localStorage.getItem('userPoints');
+     var pd=document.getElementById('userPointsDisplay');if(pd)pd.textContent=pts;
+     var td=document.getElementById('topPointsDisplay');if(td)td.textContent=pts;
+     alert('🎁 兑换成功，已到账 '+CODES[c]+' 积分');closeM();
+   }else alert('兑换码无效。积分兑换码形如 POINTS-10000');
+ });
+})();
+</script>
 
 <div class="modal-mask hidden" id="vipTeamModal">
     <div class="modal-box"><h3 class="modal-title">&#128101; 团队协作计时</h3>
