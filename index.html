@@ -6324,6 +6324,7 @@ function initVipFeatures(){
     <div class="sa-actions">
       <button id="saCopyBtn" class="sa-btn ghost" type="button">复制未用码</button>
       <button id="saDownloadBtn" class="sa-btn ghost" type="button">下载txt</button>
+      <button id="saClearAllBtn" class="sa-btn ghost" type="button">清空全部</button>
       <select id="saFilter"><option value="all">全部</option><option value="unused">未使用</option><option value="used">已使用</option></select>
     </div>
     <div class="sa-stat" id="saStat"></div>
@@ -6418,6 +6419,11 @@ function initVipFeatures(){
     var t=unusedText();if(!t){alert('没有未使用的码');return;}
     var blob=new Blob([t],{type:'text/plain;charset=utf-8'});var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);a.download='svip-激活码-'+new Date().toISOString().slice(0,10)+'.txt';a.click();
+  });
+  document.getElementById('saClearAllBtn').addEventListener('click',function(){
+    if(confirm('确定清空全部已生成的激活码？此操作不可恢复（建议先下载备份）')){
+      localStorage.removeItem('svipIssuedCodes');localStorage.removeItem('svipUsedCodes');render();alert('已清空，请重新生成新码');
+    }
   });
 })();
 </script>
