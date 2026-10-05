@@ -5333,11 +5333,8 @@ function initVipFeatures(){
                 <label style="font-size:14px;color:rgba(255,255,255,0.85);">联系邮箱（可选，方便回访）</label>
                 <input class="feedback-field" type="email" id="feedbackEmail" placeholder="your@email.com">
             </div>
-            <div style="margin-bottom:12px;">
-                <label style="font-size:14px;color:rgba(255,255,255,0.85);">截图（可选，最多3张）</label>
-                <input type="file" id="feedbackImgInput" accept="image/*" multiple style="display:none;">
-                <button type="button" id="feedbackImgPick" style="margin-top:6px;">📷 添加截图（自动上传）</button>
-                <div class="fb-img-preview" id="feedbackImgPreview"></div>
+            <div style="margin-bottom:12px;padding:11px 13px;border:1px solid rgba(255,215,0,0.3);background:rgba(255,215,0,0.08);border-radius:9px;font-size:13px;color:#ffe9a8;line-height:1.7;">
+                📷 <strong>有截图能更快定位问题：</strong>请加开发者微信，把<strong>截图连同问题</strong>一起发来即可。<br>开发者微信：<strong id="fbDevWx">（待填写）</strong>
             </div>
             <div class="fb-tip" id="fbTip">💡 提交后内容会<strong>保存在本机</strong>，开发者登录管理员账号即可查看。<br>也可复制后发送至：<strong>support@example.com</strong></div>
         </div>
