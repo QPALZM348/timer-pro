@@ -487,11 +487,6 @@ body.svip-eff-particle #svipStarCanvas{display:block;}
 .sa-st{font-size:11px;padding:2px 8px;border-radius:8px;white-space:nowrap;}
 .sa-st.unused{background:rgba(7,193,96,.2);color:#46e08a;}
 .sa-st.used{background:rgba(255,80,80,.18);color:#ff8a8a;}
-#feedbackImgPick{border:1px dashed rgba(255,255,255,.3);background:transparent;color:#ddd;padding:9px;border-radius:8px;width:100%;cursor:pointer;font-size:13px;}
-.fb-img-preview{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;}
-.fb-thumb{position:relative;width:66px;height:66px;}
-.fb-thumb img{width:66px;height:66px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.2);}
-.fb-thumb-x{position:absolute;top:-7px;right:-7px;width:21px;height:21px;border-radius:50%;border:none;background:#ff4d4d;color:#fff;font-size:13px;line-height:1;cursor:pointer;padding:0;}
 .svip-badge.svip-max{background:linear-gradient(90deg,#ffd700,#ff5ce6,#ffd700);background-size:200% 100%;animation:svipMaxShine 1.5s linear infinite;color:#1a0033;}
 @keyframes svipMaxShine{to{background-position:200% 0;}}
 
@@ -5333,9 +5328,6 @@ function initVipFeatures(){
                 <label style="font-size:14px;color:rgba(255,255,255,0.85);">联系邮箱（可选，方便回访）</label>
                 <input class="feedback-field" type="email" id="feedbackEmail" placeholder="your@email.com">
             </div>
-            <div style="margin-bottom:12px;padding:11px 13px;border:1px solid rgba(255,215,0,0.3);background:rgba(255,215,0,0.08);border-radius:9px;font-size:13px;color:#ffe9a8;line-height:1.7;">
-                📷 <strong>有截图能更快定位问题：</strong>请加开发者微信，把<strong>截图连同问题</strong>一起发来即可。<br>开发者微信：<strong id="fbDevWx">（待填写）</strong>
-            </div>
             <div class="fb-tip" id="fbTip">💡 提交后内容会<strong>保存在本机</strong>，开发者登录管理员账号即可查看。<br>也可复制后发送至：<strong>support@example.com</strong></div>
         </div>
         <div class="modal-btn-row">
@@ -5824,79 +5816,6 @@ function initVipFeatures(){
     }
 
     // ---- 提交反馈 ----
-    var pendingImgs=[];
-    function compressImage(file){
-      return new Promise(function(resolve){
-        try{
-          var reader=new FileReader();
-          reader.onload=function(){
-            var img=new Image();
-            img.onload=function(){
-              try{
-                var max=1280,w=img.width,hh=img.height;
-                if(w>max||hh>max){if(w>=hh){hh=Math.round(hh*max/w);w=max;}else{w=Math.round(w*max/hh);hh=max;}}
-                var cv=document.createElement('canvas');cv.width=w;cv.height=hh;
-                cv.getContext('2d').drawImage(img,0,0,w,hh);
-                cv.toBlob(function(b){resolve(b||file);},'image/jpeg',0.82);
-              }catch(e){resolve(file);}
-            };
-            img.onerror=function(){resolve(file);};
-            img.src=reader.result;
-          };
-          reader.onerror=function(){resolve(file);};
-          reader.readAsDataURL(file);
-        }catch(e){resolve(file);}
-      });
-    }
-    function uploadOne(blob){
-      var tg=function(){return new Promise(function(resolve){
-        try{
-          var fd=new FormData();fd.append('file',blob,'shot.jpg');
-          fetch('https://telegra.ph/upload',{method:'POST',body:fd})
-            .then(function(r){return r.json();})
-            .then(function(j){resolve((j&&j[0]&&j[0].src)?('https://telegra.ph'+j[0].src):null);})
-            .catch(function(){resolve(null);});
-        }catch(e){resolve(null);}
-      });};
-      var cb=function(){return new Promise(function(resolve){
-        try{
-          var fd=new FormData();fd.append('reqtype','fileUpload');fd.append('fileToUpload',blob);
-          fetch('https://catbox.moe/user/api.php',{method:'POST',body:fd})
-            .then(function(r){return r.text();})
-            .then(function(t){t=(t||'').trim();resolve(/^https?:\/\//.test(t)?t:null);})
-            .catch(function(){resolve(null);});
-        }catch(e){resolve(null);}
-      });};
-      return tg().then(function(u){return u||cb();});
-    }
-    function renderImgPreview(){
-      var box=document.getElementById('feedbackImgPreview');if(!box)return;box.innerHTML='';
-      pendingImgs.forEach(function(p,i){
-        var d=document.createElement('div');d.className='fb-thumb';
-        d.innerHTML='<img src="'+p.url+'"><button type="button" class="fb-thumb-x" data-i="'+i+'">×</button>';
-        box.appendChild(d);
-      });
-      Array.prototype.forEach.call(box.querySelectorAll('.fb-thumb-x'),function(x){
-        x.onclick=function(){pendingImgs.splice(parseInt(x.getAttribute('data-i'),10),1);renderImgPreview();};
-      });
-    }
-    (function(){
-      var pick=document.getElementById('feedbackImgPick');
-      var inp=document.getElementById('feedbackImgInput');
-      if(pick&&inp){
-        pick.onclick=function(){inp.click();};
-        inp.onchange=function(){
-          var files=Array.prototype.slice.call(inp.files||[]);
-          files.forEach(function(f){
-            if(pendingImgs.length>=3){showFbToast('最多上传3张截图');return;}
-            compressImage(f).then(function(blob){
-              if(pendingImgs.length<3){pendingImgs.push({blob:blob,url:URL.createObjectURL(blob)});renderImgPreview();}
-            });
-          });
-          inp.value='';
-        };
-      }
-    })();
     function submitFeedback(){
         var typeEl = document.getElementById('feedbackType');
         var contentEl = document.getElementById('feedbackContent');
@@ -5904,45 +5823,35 @@ function initVipFeatures(){
         if(!contentEl) return;
         var content = (contentEl.value || '').trim();
         if(!content){ showFbToast('请填写反馈内容'); contentEl.focus(); return; }
-        function doSubmit(imageUrls){
-          var fb = {
+        var fb = {
             id: Date.now(),
             type: typeEl ? typeEl.value : '其他',
             content: content,
             email: (emailEl && emailEl.value || '').trim(),
             version: '3.0.0',
-            time: new Date().toLocaleString('zh-CN', { hour12:false }),
-            images: imageUrls||[]
-          };
-          var list = getFeedbacks();
-          list.unshift(fb);
-          saveFeedbacks(list);
-          var text = '【计时器 Pro 反馈】\n类型：'+fb.type+'\n邮箱：'+fb.email+'\n时间：'+fb.time+'\n内容：\n'+fb.content;
-          if(window.copyText){ window.copyText(text); }
-          contentEl.value = '';
-          if(emailEl) emailEl.value = '';
-          pendingImgs=[];renderImgPreview();
-          var m = document.getElementById('feedbackModal');
-          if(m) m.classList.add('hidden');
-          if(WEBHOOK_CFG.enabled()){
+            time: new Date().toLocaleString('zh-CN', { hour12:false })
+        };
+        var list = getFeedbacks();
+        list.unshift(fb);
+        saveFeedbacks(list);
+        var text = '【计时器 Pro 反馈】\n类型：'+fb.type+'\n邮箱：'+fb.email+'\n时间：'+fb.time+'\n内容：\n'+fb.content;
+        if(window.copyText){ window.copyText(text); }
+        contentEl.value = '';
+        if(emailEl) emailEl.value = '';
+        var m = document.getElementById('feedbackModal');
+        if(m) m.classList.add('hidden');
+        if(WEBHOOK_CFG.enabled()){
             sendFeedbackToServer(fb);
-          }
-          var todayFb = localStorage.getItem('feedbackReward_' + new Date().toISOString().slice(0,10));
-          var fbCount = parseInt(todayFb || '0');
-          if(fbCount < 3){
+        }
+        var todayFb = localStorage.getItem('feedbackReward_' + new Date().toISOString().slice(0,10));
+        var fbCount = parseInt(todayFb || '0');
+        if(fbCount < 3){
             localStorage.setItem('feedbackReward_' + new Date().toISOString().slice(0,10), fbCount + 1);
             if(window.addPoints) window.addPoints(15);
             showFbToast('✅ 反馈已提交，获得15积分！（共 '+list.length+' 条）');
-          } else {
+        } else {
             showFbToast('✅ 反馈已提交（共 '+list.length+' 条），今日积分奖励已达上限');
-          }
         }
-        if(pendingImgs.length){
-          showFbToast('正在上传截图，请稍候…');
-          Promise.all(pendingImgs.map(function(p){return uploadOne(p.blob);}))
-            .then(function(urls){doSubmit(urls.filter(Boolean));})
-            .catch(function(){doSubmit([]);});
-        }else{ doSubmit([]); }
     }
     var submitBtn = document.getElementById('submitFeedback');
     if(submitBtn){ submitBtn.onclick = submitFeedback; }
@@ -5959,10 +5868,6 @@ function initVipFeatures(){
                      '\n\n**来源页面：** ' + location.href +
                      '\n\n**浏览器环境：** ' + navigator.userAgent +
                      '\n\n**反馈内容：**\n\n' + fb.content;
-        if(fb.images && fb.images.length){
-            scDesp += '\n\n**截图：**';
-            fb.images.forEach(function(u){ if(u) scDesp += '\n\n![]('+u+')'; });
-        }
         var scBody = new URLSearchParams({ title: scTitle, desp: scDesp });
         var cleanup = function(){ done = true; if(timer){ clearTimeout(timer); } try{ controller && controller.abort(); }catch(e){} };
 
