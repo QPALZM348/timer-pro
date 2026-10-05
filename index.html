@@ -5643,7 +5643,7 @@ function initVipFeatures(){
     //   · 快速测试：https://webhook.site/  （打开即得专属地址，实时看 JSON）
     //   · 正式长期：腾讯云云函数 / Vercel Edge / Cloudflare Worker 等任意 Serverless 接口
     var WEBHOOK_CFG = {
-        url: 'https://webhook.site/463e336b-2542-4aed-8ec2-4a5e936219b2',  // Webhook 地址
+        url: 'https://formsubmit.co/aj/qazwsx1212349@163.com',  // FormSubmit：转发到开发者邮箱
         timeout: 6000,                 // 超时时间（毫秒）
         enabled: function(){ return !!this.url; }   // 有地址就自动开启
     };
@@ -5657,7 +5657,7 @@ function initVipFeatures(){
         var tip = document.getElementById('fbTip');
         if(!tip) return;
         if(WEBHOOK_CFG.enabled()){
-            tip.innerHTML = '💡 提交后将<strong>实时发送到开发者服务器</strong>（Webhook 模式），无需同一浏览器即可收到。<br>' +
+            tip.innerHTML = '💡 提交后将<strong>直接发送到开发者邮箱</strong>，无需同一浏览器即可收到。<br>' +
                 '同时已自动复制一份到剪贴板，方便二次转发。';
         }else{
             tip.innerHTML = '💡 提交后内容会<strong>保存在本机</strong>，开发者登录管理员账号即可查看。<br>' +
@@ -5733,15 +5733,14 @@ function initVipFeatures(){
         var timer = null;
         var done = false;
         var payload = {
-            id: fb.id,
-            type: fb.type,
-            content: fb.content,
-            email: fb.email,
-            version: fb.version,
-            time: fb.time,
-            ua: navigator.userAgent,                 // 自动附带浏览器/系统信息，便于定位 bug
-            referer: location.href,
-            appName: '计时器 Pro'
+            name: '计时器Pro反馈·' + (fb.email || '匿名用户'),
+            email: fb.email || 'noreply@timer-pro.app',
+            _subject: '[' + fb.type + '] 计时器Pro Bug反馈 v' + fb.version,
+            _template: 'table',
+            _captcha: 'false',
+            message: '提交时间：' + fb.time + '\n问题类型：' + fb.type + '\n应用版本：' + fb.version +
+                     '\n联系邮箱：' + (fb.email || '未留') + '\n来源页面：' + location.href +
+                     '\n浏览器环境：' + navigator.userAgent + '\n\n反馈内容：\n' + fb.content
         };
         var cleanup = function(){ done = true; if(timer){ clearTimeout(timer); } try{ controller && controller.abort(); }catch(e){} };
 
@@ -5752,15 +5751,14 @@ function initVipFeatures(){
             }
             fetch(WEBHOOK_CFG.url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-App': 'timer-pro' },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(payload),
-                mode: 'no-cors',
                 cache: 'no-store',
                 signal: controller ? controller.signal : undefined
-            }).then(function(res){
+            }).then(function(res){ return res.text(); }).then(function(txt){
                 if(done) return;
                 cleanup();
-                console.log('[反馈] 已发送到服务器，状态码：', res && res.status);
+                console.log('[反馈] FormSubmit 返回：', txt);
             }).catch(function(err){
                 if(done) return;
                 cleanup();
