@@ -6326,7 +6326,9 @@ function initVipFeatures(){
     var s1='fk9x27tpQ'+text,s2=text+'z7Qp2xk9f',h=2166136261,i;
     for(i=0;i<s1.length;i++){h^=s1.charCodeAt(i);h=Math.imul(h,16777619);}
     for(i=0;i<s2.length;i++){h^=s2.charCodeAt(i);h=Math.imul(h,2246822519);}
-    var v=(h>>>0).toString(32).toUpperCase();while(v.length<5)v='0'+v;return v;
+    var ALPH='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',o='',x=h>>>0,i;
+    for(i=0;i<5;i++){o=ALPH.charAt(x&31)+o;x=x>>>5;}
+    return o;
   }
   function randR(){var c='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567',o='',i;for(i=0;i<5;i++)o+=c[Math.floor(Math.random()*c.length)];return o;}
   function getIssued(){try{return JSON.parse(localStorage.getItem(ISSUE_KEY))||[];}catch(e){return[];}}
