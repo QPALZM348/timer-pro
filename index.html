@@ -5643,7 +5643,7 @@ function initVipFeatures(){
     //   · 快速测试：https://webhook.site/  （打开即得专属地址，实时看 JSON）
     //   · 正式长期：腾讯云云函数 / Vercel Edge / Cloudflare Worker 等任意 Serverless 接口
     var WEBHOOK_CFG = {
-        url: 'https://formsubmit.co/aj/qazwsx1212349@163.com',  // FormSubmit：转发到开发者邮箱
+        url: 'https://sctapi.ftqq.com/SCT432974T5WFP31qkPYJEn27apPiyccf0.send',  // Server酱：推送到开发者微信
         timeout: 6000,                 // 超时时间（毫秒）
         enabled: function(){ return !!this.url; }   // 有地址就自动开启
     };
@@ -5657,7 +5657,7 @@ function initVipFeatures(){
         var tip = document.getElementById('fbTip');
         if(!tip) return;
         if(WEBHOOK_CFG.enabled()){
-            tip.innerHTML = '💡 提交后将<strong>直接发送到开发者邮箱</strong>，无需同一浏览器即可收到。<br>' +
+            tip.innerHTML = '💡 提交后将<strong>直接推送到开发者微信</strong>，无需同一浏览器即可收到。<br>' +
                 '同时已自动复制一份到剪贴板，方便二次转发。';
         }else{
             tip.innerHTML = '💡 提交后内容会<strong>保存在本机</strong>，开发者登录管理员账号即可查看。<br>' +
@@ -5732,16 +5732,13 @@ function initVipFeatures(){
         var controller = null;
         var timer = null;
         var done = false;
-        var payload = {
-            name: '计时器Pro反馈·' + (fb.email || '匿名用户'),
-            email: fb.email || 'noreply@timer-pro.app',
-            _subject: '[' + fb.type + '] 计时器Pro Bug反馈 v' + fb.version,
-            _template: 'table',
-            _captcha: 'false',
-            message: '提交时间：' + fb.time + '\n问题类型：' + fb.type + '\n应用版本：' + fb.version +
-                     '\n联系邮箱：' + (fb.email || '未留') + '\n来源页面：' + location.href +
-                     '\n浏览器环境：' + navigator.userAgent + '\n\n反馈内容：\n' + fb.content
-        };
+        var scTitle = '[' + fb.type + '] 计时器Pro Bug反馈 v' + fb.version;
+        var scDesp = '**提交时间：** ' + fb.time + '\n\n**问题类型：** ' + fb.type +
+                     '\n\n**联系邮箱：** ' + (fb.email || '未留') +
+                     '\n\n**来源页面：** ' + location.href +
+                     '\n\n**浏览器环境：** ' + navigator.userAgent +
+                     '\n\n**反馈内容：**\n\n' + fb.content;
+        var scBody = new URLSearchParams({ title: scTitle, desp: scDesp });
         var cleanup = function(){ done = true; if(timer){ clearTimeout(timer); } try{ controller && controller.abort(); }catch(e){} };
 
         try{
@@ -5751,14 +5748,15 @@ function initVipFeatures(){
             }
             fetch(WEBHOOK_CFG.url, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: scBody,
+                mode: 'no-cors',
                 cache: 'no-store',
                 signal: controller ? controller.signal : undefined
-            }).then(function(res){ return res.text(); }).then(function(txt){
+            }).then(function(res){
                 if(done) return;
                 cleanup();
-                console.log('[反馈] FormSubmit 返回：', txt);
+                console.log('[反馈] 已推送到开发者微信（Server酱）');
             }).catch(function(err){
                 if(done) return;
                 cleanup();
