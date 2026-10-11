@@ -1382,12 +1382,12 @@ function openFriends(){
         const user=getUserData();
         if(!user.account)return alert('请先登录账号');
         const plan=(currentTier==='svip'?svipPlans:vipPlans)[selectedPlanIndex];
-        payPlanName.innerText=plan.name;
-        payPrice.innerText=plan.price;
-        selectPayType='';
-        payItems.forEach(p=>p.classList.remove('active'));
+        qrTitle.innerText=(currentTier==='svip'?'SVIP ':'VIP ')+plan.name;
+        qrPrice.innerText=`¥${plan.priceNum.toFixed(2)}`;
+        autoPayCountTip.innerText='请用微信「扫一扫」完成付款；付款后向开发者索取激活码，回到本页在激活码框输入开通';
+        autoPayCountTip.style.color='#ffd700';
         vipModal.classList.add('hidden');
-        payModal.classList.remove('hidden');
+        qrcodePayModal.classList.remove('hidden');
     };
     payItems.forEach(item=>{
         item.onclick=function(){
@@ -1404,7 +1404,7 @@ function openFriends(){
     const qrBackBtn=document.getElementById('qrBackBtn');
     const autoPayCountTip=document.getElementById('autoPayCountTip');
 
-    qrBackBtn.onclick=()=>{qrcodePayModal.classList.add('hidden');payModal.classList.remove('hidden');};
+    qrBackBtn.onclick=()=>{qrcodePayModal.classList.add('hidden');vipModal.classList.remove('hidden');};
 
     paySubmitBtn.onclick=()=>{
         if(!selectPayType)return alert('请选择支付方式');
@@ -1413,21 +1413,9 @@ function openFriends(){
         qrPrice.innerText=`¥${plan.priceNum.toFixed(2)}`;
         payModal.classList.add('hidden');
         qrcodePayModal.classList.remove('hidden');
-        let autoCount=5;
-        autoPayCountTip.innerText=`支付确认倒计时：${autoCount}秒`;
-        const autoTimer=setInterval(()=>{
-            autoCount--;
-            autoPayCountTip.innerText=`支付确认倒计时：${autoCount}秒`;
-            if(autoCount<=0){
-                clearInterval(autoTimer);
-                openVipAuto(plan);
-                qrcodePayModal.classList.add('hidden');
-                alert('支付成功！会员已自动开通');
-                refreshUserUI();
-                renderSkin();
-                updateVipLocks();
-            }
-        },1000);
+        // 真实付款：不做任何自动开通，玩家扫码付款后凭开发者发放的激活码在 vipModal 激活
+        autoPayCountTip.innerText='请用微信「扫一扫」完成付款；付款后向开发者索取激活码，回到本页在激活码框输入开通';
+        autoPayCountTip.style.color='#ffd700';
     };
 
     function openVipAuto(item){
