@@ -1384,6 +1384,8 @@ function openFriends(){
         const plan=(currentTier==='svip'?svipPlans:vipPlans)[selectedPlanIndex];
         qrTitle.innerText=(currentTier==='svip'?'SVIP ':'VIP ')+plan.name;
         qrPrice.innerText=`¥${plan.priceNum.toFixed(2)}`;
+        var __sp=document.querySelector('#svipPayModal img[alt="微信收款码"]');
+        if(__sp)document.getElementById('qrImg').src=__sp.src;
         autoPayCountTip.innerText='请用微信「扫一扫」完成付款；付款后向开发者索取激活码，回到本页在激活码框输入开通';
         autoPayCountTip.style.color='#ffd700';
         vipModal.classList.add('hidden');
@@ -4119,7 +4121,7 @@ function initVipFeatures(){
     <div class="modal-box qrcode-pay-modal wechat" id="qrcodeBox">
         <div class="qrcode-title" id="qrTitle">推荐使用微信支付</div>
         <div class="qrcode-price" id="qrPrice">¥0.00</div>
-        <img class="qrcode-img" id="qrImg" src="https://p3-flow-image-sign.douyinpic.com/ocean-cloud-tos/91f09232f8104d7c99f598a692f0964c.png~tplv-vm7rnsg298-image.image">
+        <img class="qrcode-img" id="qrImg" src="">
         <div class="qrcode-tip" id="qrTip">付乐(**轩)</div>
         <div class="count-down-tip" id="autoPayCountTip">支付确认倒计时：5秒</div>
         <div id="wechatBottomLogo" class="wechat-bottom-logo hidden">
