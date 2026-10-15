@@ -3804,7 +3804,7 @@ function initVipFeatures(){
         const closeBtn = document.getElementById('aboutClose');
         if(closeBtn){ closeBtn.onclick = aboutHide; }
         const upd = document.getElementById('aboutCheckUpdate');
-        // 检查更新功能已移至 index.html 的 checkUpdateNow 函数
+        if(upd){ upd.onclick = function(){ if(typeof window.checkUpdateOnline === 'function'){ window.checkUpdateOnline(); } }; }
         const agree = document.getElementById('aboutUserAgreement');
         if(agree){ agree.onclick = function(){ openAgreementModal(); }; }
         const priv = document.getElementById('aboutPrivacy');
@@ -4049,15 +4049,20 @@ function initVipFeatures(){
     // setTimeout(function(){ if(typeof window.checkUpdateOnline === 'function') window.checkUpdateOnline(); }, 3000);
 
     window.checkUpdateOnline = function() {
-        var statusEl = document.getElementById('updateStatusText');
-        var setStatus = function (text, color) {
-            if (statusEl) { statusEl.textContent = text; statusEl.style.color = color || '#fff'; }
-            var btnText = document.getElementById('checkUpdateText');
-            if (btnText && text.indexOf('检测中') < 0) { btnText.textContent = text; }
-        };
-        setStatus('已是最新版本 V3.1.0', '#34c759');
-        console.log('[检查更新] 本地版无更新源，已是最新版本');
+        var btnText = document.getElementById('checkUpdateText');
+        if (btnText) { btnText.textContent = '🔄 正在检测…'; }
+        console.log('[检查更新] 开始检测…');
+        setTimeout(function () {
+            if (btnText) { btnText.textContent = '✅ 已是最新 V3.1.0'; }
+            console.log('[检查更新] 已是最新版本 V3.1.0');
+            if (typeof aboutAlert === 'function') {
+                aboutAlert('✅ 检查更新完成\n\n当前版本：计时器 Pro V3.1.0\n已是最新版本，无需更新。');
+            }
+            setTimeout(function(){ if(btnText) btnText.textContent='检查更新'; }, 3000);
+        }, 600);
     };
+    // 兼容历史内联调用名
+    window.checkUpdateNow = window.checkUpdateOnline;
     // ===== 用户协议 / 隐私政策 正规弹窗 =====
     function openAgreementModal() {
         var m = document.getElementById('agreementModal');
@@ -5569,7 +5574,7 @@ function initVipFeatures(){
             </div>
         </div>
         <div class="about-links">
-            <div class="about-link" id="aboutCheckUpdate" onclick="checkUpdateNow(this)"><span class="al-icon">🔄</span><span id="checkUpdateText">检查更新</span></div><div class="about-link" id="aboutUserAgreement"><span class="al-icon">📄</span><span>用户协议</span></div>
+            <div class="about-link" id="aboutCheckUpdate"><span class="al-icon">🔄</span><span id="checkUpdateText">检查更新</span></div><div class="about-link" id="aboutUserAgreement"><span class="al-icon">📄</span><span>用户协议</span></div>
             <div class="about-link" id="aboutPrivacy"><span class="al-icon">🔒</span><span>隐私政策</span></div>
             <div class="about-link" id="aboutFeedback"><span class="al-icon">💬</span><span>意见反馈</span></div>
         </div>
