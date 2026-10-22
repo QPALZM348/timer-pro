@@ -5334,6 +5334,15 @@ function initVipFeatures(){
                 <input class="feedback-field" type="email" id="feedbackEmail" placeholder="your@email.com">
             </div>
             <div class="fb-tip" id="fbTip">💡 提交后内容会<strong>保存在本机</strong>，开发者登录管理员账号即可查看。<br>也可复制后发送至：<strong>qazwsx1212349@163.com</strong></div>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.18);">
+                <label style="font-size:14px;color:rgba(255,255,255,0.85);">🔎 查询工单进度</label>
+                <div style="display:flex;gap:8px;margin-top:6px;">
+                    <input class="feedback-field" id="ticketQuery" type="number" min="1" placeholder="输入工单号，如 12" style="flex:1;margin-bottom:0;">
+                    <button class="btn btn-primary" id="ticketQueryBtn" type="button" style="white-space:nowrap;">查询</button>
+                </div>
+                <div id="ticketResult" style="margin-top:10px;font-size:13px;line-height:1.6;"></div>
+                <div id="myTicketsBox" style="margin-top:8px;"></div>
+            </div>
         </div>
         <div class="modal-btn-row">
             <button class="btn btn-danger" data-close="feedbackModal">取消</button>
@@ -5788,6 +5797,14 @@ function initVipFeatures(){
         enabled: function(){ return !!this.url; }   // 有地址就自动开启
     };
 
+    // ===== 工单系统：用 GitHub Issues 实现"待审核/审核中/已处理"状态回传 =====
+    var ISSUE_CFG = {
+        repo: 'QPALZM348/timer-pro',
+        token: 'github_pat_11CNUQJBQ0RDVd8qY5f7j6_TDSMS1G92YIDxMAzo7Xb9BGXUjRidy1an6qDvXVlzZz7BQ',   // 「仅 Issues 读写」的 fine-grained 令牌（其它权限一律不给）
+        api: function(){ return 'https://api.github.com/repos/' + this.repo; },
+        ready: function(){ return !!this.token; }
+    };
+
     // ---- 数据存储 ----
     function getFeedbacks(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }catch(e){ return []; } }
     function saveFeedbacks(arr){ localStorage.setItem(STORE_KEY, JSON.stringify(arr)); }
@@ -5848,6 +5865,18 @@ function initVipFeatures(){
         if(WEBHOOK_CFG.enabled()){
             sendFeedbackToServer(fb);
         }
+        if(ISSUE_CFG.ready()){
+            createIssueFromFeedback(fb).then(function(issue){
+                if(issue && issue.number){
+                    try{
+                        var saved = JSON.parse(localStorage.getItem('myTickets') || '[]');
+                        saved.push({ num: issue.number, title: issue.title, time: fb.time });
+                        localStorage.setItem('myTickets', JSON.stringify(saved));
+                    }catch(e){}
+                    showFbToast('🎫 工单已创建，编号 #' + issue.number + '，请保存以便查询进度');
+                }
+            });
+        }
         var todayFb = localStorage.getItem('feedbackReward_' + new Date().toISOString().slice(0,10));
         var fbCount = parseInt(todayFb || '0');
         if(fbCount < 3){
@@ -5860,6 +5889,56 @@ function initVipFeatures(){
     }
     var submitBtn = document.getElementById('submitFeedback');
     if(submitBtn){ submitBtn.onclick = submitFeedback; }
+
+    // ---- 工单查询 UI ----
+    var ticketResult = document.getElementById('ticketResult');
+    function renderMyTickets(){
+        var box = document.getElementById('myTicketsBox');
+        if(!box) return;
+        var saved;
+        try{ saved = JSON.parse(localStorage.getItem('myTickets') || '[]'); }catch(e){ saved = []; }
+        if(!saved.length){ box.innerHTML = ''; return; }
+        box.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,0.6);margin:6px 0 2px;">我提交过的工单（点击查询）：</div>' +
+            saved.map(function(t){
+                return '<span class="my-ticket-chip" data-num="'+t.num+'" style="display:inline-block;background:rgba(124,108,255,0.25);border:1px solid rgba(124,108,255,0.5);color:#fff;border-radius:12px;padding:2px 10px;font-size:12px;margin:2px;cursor:pointer;">#'+t.num+'</span>';
+            }).join('');
+        box.querySelectorAll('.my-ticket-chip').forEach(function(el){
+            el.onclick = function(){
+                var q = document.getElementById('ticketQuery');
+                if(q){ q.value = el.getAttribute('data-num'); doQueryTicket(); }
+            };
+        });
+    }
+    function doQueryTicket(){
+        var q = document.getElementById('ticketQuery');
+        if(!q) return;
+        var num = (q.value || '').trim();
+        if(!num){ if(ticketResult) ticketResult.innerHTML = '<span style="color:#ff8a80;">请先输入工单号</span>'; return; }
+        if(ticketResult) ticketResult.innerHTML = '<span style="color:rgba(255,255,255,0.7);">⏳ 正在查询…</span>';
+        queryTicket(num).then(function(data){
+            var issue = data.issue, st = ticketState(issue);
+            var html = '<div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:10px;">' +
+                '<div style="font-weight:600;color:#fff;">工单 #' + issue.number + '</div>' +
+                '<div style="color:' + st.color + ';font-weight:600;margin:4px 0;">' + st.text + '</div>' +
+                '<div style="color:rgba(255,255,255,0.75);font-size:12px;">' + escapeHtml(issue.title) + '</div>';
+            if(data.comments.length){
+                html += '<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,0.12);padding-top:8px;">';
+                data.comments.forEach(function(c){
+                    html += '<div style="margin-bottom:6px;"><span style="color:#9fa8da;font-size:12px;">💬 开发者回复：</span><div style="color:rgba(255,255,255,0.9);white-space:pre-wrap;font-size:12px;">' + escapeHtml(c.body) + '</div></div>';
+                });
+                html += '</div>';
+            }
+            html += '</div>';
+            if(ticketResult) ticketResult.innerHTML = html;
+        }).catch(function(e){
+            if(ticketResult) ticketResult.innerHTML = '<span style="color:#ff8a80;">⚠️ ' + escapeHtml(e.message || '查询失败') + '</span>';
+        });
+    }
+    var tqBtn = document.getElementById('ticketQueryBtn');
+    if(tqBtn){ tqBtn.onclick = doQueryTicket; }
+    var tqInput = document.getElementById('ticketQuery');
+    if(tqInput){ tqInput.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ doQueryTicket(); } }); }
+    renderMyTickets();
 
     // ---- 向公网 Webhook 发送反馈（Serverless，无需端口）----
     // 设计原则：绝不阻塞主流程、绝不抛异常、绝不弹多余提示（本地已 toast 过）
@@ -5909,6 +5988,59 @@ function initVipFeatures(){
         console.log('[反馈] 已补发 '+list.length+' 条');
         return list.length;
     };
+
+    // ===== GitHub Issues 工单 =====
+    function ghHeaders(){
+        var h = { 'Accept':'application/vnd.github+json', 'Content-Type':'application/json', 'User-Agent':'timer-pro' };
+        if(ISSUE_CFG.ready()){ h['Authorization'] = 'token ' + ISSUE_CFG.token; }
+        return h;
+    }
+    // 提交反馈后自动创建工单（Issue），返回工单号
+    function createIssueFromFeedback(fb){
+        if(!ISSUE_CFG.ready()){ return Promise.resolve(null); }
+        var title = '[' + fb.type + '] ' + fb.content.slice(0, 50);
+        var body = '**提交时间：** ' + fb.time +
+                   '\n\n**问题类型：** ' + fb.type +
+                   '\n\n**联系邮箱：** ' + (fb.email || '未留') +
+                   '\n\n**应用版本：** V' + fb.version +
+                   '\n\n**浏览器环境：** `' + navigator.userAgent + '`' +
+                   '\n\n**反馈内容：**\n\n' + fb.content +
+                   '\n\n---\n*本工单由玩家在「计时器 Pro」内提交 · 初始状态：待审核*';
+        return fetch(ISSUE_CFG.api() + '/issues', {
+            method: 'POST',
+            headers: ghHeaders(),
+            body: JSON.stringify({ title: title, body: body, labels: ['玩家反馈'] })
+        }).then(function(r){
+            if(!r.ok){ throw new Error('create issue ' + r.status); }
+            return r.json();
+        }).catch(function(e){
+            console.warn('[工单] 创建失败（不影响本地/微信推送）：', e && e.message);
+            return null;
+        });
+    }
+    // 状态映射：open + 「审核中」标签=审核中；open=待审核；closed=已处理
+    function ticketState(issue){
+        if(issue.state === 'closed'){ return { key:'done', text:'✅ 已处理（已审核）', color:'#4caf50' }; }
+        var reviewing = (issue.labels || []).some(function(l){ return l.name === '审核中'; });
+        return reviewing
+            ? { key:'reviewing', text:'🔍 正在审核', color:'#ffb300' }
+            : { key:'pending', text:'🕐 待审核', color:'#90caf9' };
+    }
+    // 玩家查询工单（含开发者回复）
+    function queryTicket(num){
+        return fetch(ISSUE_CFG.api() + '/issues/' + encodeURIComponent(num), { headers: ghHeaders() })
+            .then(function(r){
+                if(r.status === 404){ throw new Error('未找到该工单，请核对工单号'); }
+                if(!r.ok){ throw new Error('查询失败（' + r.status + '），请稍后再试'); }
+                return r.json();
+            })
+            .then(function(issue){
+                if(typeof issue.pull_request !== 'undefined'){ throw new Error('工单号无效'); }
+                return fetch(ISSUE_CFG.api() + '/issues/' + issue.number + '/comments', { headers: ghHeaders() })
+                    .then(function(r){ return r.ok ? r.json() : []; })
+                    .then(function(comments){ return { issue: issue, comments: comments }; });
+            });
+    }
 
     // 支持 Ctrl/Cmd + Enter 快捷提交
     var contentEl = document.getElementById('feedbackContent');
