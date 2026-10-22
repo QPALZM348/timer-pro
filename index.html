@@ -6164,7 +6164,7 @@ function initVipFeatures(){
             + '  pre{padding:16px 20px;margin:0;white-space:pre-wrap;word-break:break-all;}'
             + '  .empty{padding:40px;text-align:center;color:#888;}'
             + '</style></' + 'head><' + 'body>'
-            + '<div class="bar"><h1>🐞 管理员调试页 — 用户反馈原始数据</h1><button onclick="window.close()">✕ 关闭</button></div>'
+            + '<div class="bar"><h1>🐞 管理员调试页 — 用户反馈原始数据</h1><button onclick="try{parent.document.getElementById(\'adminDebugOverlay\').remove();}catch(e){window.close();}">✕ 关闭</button></div>'
             + '<div class="tags">'
             + '  <span>☁️ 云端：' + (WEBHOOK_CFG.enabled() ? '已开启' : '本地') + '</span>'
             + '  <span>📨 共 ' + list.length + ' 条</span>'
@@ -6183,20 +6183,10 @@ function initVipFeatures(){
         var overlay=document.createElement('div');
         overlay.id='adminDebugOverlay';
         overlay.style.cssText='position:fixed;inset:0;z-index:999999;background:#fff;';
-        var bar=document.createElement('div');
-        bar.style.cssText='position:absolute;top:0;left:0;right:0;height:48px;background:#000;color:#fff;display:flex;justify-content:space-between;align-items:center;padding:0 16px;z-index:2;box-sizing:border-box;';
-        var title=document.createElement('span');
-        title.style.cssText='font-size:15px;font-weight:bold;';
-        title.textContent='🐞 管理员调试页 — 用户反馈原始数据';
-        var close=document.createElement('button');
-        close.textContent='✕ 关闭';
-        close.style.cssText='padding:6px 14px;background:#fff;color:#000;border:none;border-radius:4px;cursor:pointer;font-size:13px;';
-        close.onclick=function(){ overlay.remove(); };
-        bar.appendChild(title); bar.appendChild(close);
         var iframe=document.createElement('iframe');
-        iframe.style.cssText='position:absolute;top:48px;left:0;right:0;bottom:0;width:100%;height:calc(100% - 48px);border:none;background:#fff;';
+        iframe.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:none;background:#fff;';
         iframe.setAttribute('srcdoc',buildDebugHTML());
-        overlay.appendChild(bar); overlay.appendChild(iframe);
+        overlay.appendChild(iframe);
         document.body.appendChild(overlay);
     }
 })();
