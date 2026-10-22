@@ -6006,6 +6006,7 @@ function initVipFeatures(){
                    '\n\n**浏览器环境：** `' + navigator.userAgent + '`' +
                    '\n\n**反馈内容：**\n\n' + fb.content +
                    '\n\n---\n*本工单由玩家在「计时器 Pro」内提交 · 初始状态：待审核*';
+        console.log('[工单调试] token长度:', ISSUE_CFG.token.length, '| 前12:', ISSUE_CFG.token.slice(0,12), '| 后12:', ISSUE_CFG.token.slice(-12), '| url:', ISSUE_CFG.api()+'/issues');
         return fetch(ISSUE_CFG.api() + '/issues', {
             method: 'POST',
             headers: ghHeaders(),
