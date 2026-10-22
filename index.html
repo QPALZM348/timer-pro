@@ -5865,7 +5865,6 @@ function initVipFeatures(){
         if(WEBHOOK_CFG.enabled()){
             sendFeedbackToServer(fb);
         }
-        console.log('[工单调试] submitFeedback: ready=', ISSUE_CFG.ready(), 'token长度=', ISSUE_CFG.token.length, 'token=', ISSUE_CFG.token.slice(0,15));
         if(ISSUE_CFG.ready()){
             createIssueFromFeedback(fb).then(function(issue){
                 if(issue && issue.number){
@@ -6007,7 +6006,6 @@ function initVipFeatures(){
                    '\n\n**浏览器环境：** `' + navigator.userAgent + '`' +
                    '\n\n**反馈内容：**\n\n' + fb.content +
                    '\n\n---\n*本工单由玩家在「计时器 Pro」内提交 · 初始状态：待审核*';
-        console.log('[工单调试] token长度:', ISSUE_CFG.token.length, '| 前12:', ISSUE_CFG.token.slice(0,12), '| 后12:', ISSUE_CFG.token.slice(-12), '| url:', ISSUE_CFG.api()+'/issues');
         return fetch(ISSUE_CFG.api() + '/issues', {
             method: 'POST',
             headers: ghHeaders(),
@@ -6030,7 +6028,7 @@ function initVipFeatures(){
     }
     // 玩家查询工单（含开发者回复）
     function queryTicket(num){
-        return fetch(ISSUE_CFG.api() + '/issues/' + encodeURIComponent(num), { headers: ghHeaders() })
+        return fetch(ISSUE_CFG.api() + '/issues/' + encodeURIComponent(num), { headers: ghHeaders(), cache: 'no-store' })
             .then(function(r){
                 if(r.status === 404){ throw new Error('未找到该工单，请核对工单号'); }
                 if(!r.ok){ throw new Error('查询失败（' + r.status + '），请稍后再试'); }
@@ -6038,7 +6036,7 @@ function initVipFeatures(){
             })
             .then(function(issue){
                 if(typeof issue.pull_request !== 'undefined'){ throw new Error('工单号无效'); }
-                return fetch(ISSUE_CFG.api() + '/issues/' + issue.number + '/comments', { headers: ghHeaders() })
+                return fetch(ISSUE_CFG.api() + '/issues/' + issue.number + '/comments', { headers: ghHeaders(), cache: 'no-store' })
                     .then(function(r){ return r.ok ? r.json() : []; })
                     .then(function(comments){ return { issue: issue, comments: comments }; });
             });
