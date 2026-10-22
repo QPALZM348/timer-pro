@@ -5865,6 +5865,7 @@ function initVipFeatures(){
         if(WEBHOOK_CFG.enabled()){
             sendFeedbackToServer(fb);
         }
+        console.log('[工单调试] submitFeedback: ready=', ISSUE_CFG.ready(), 'token长度=', ISSUE_CFG.token.length, 'token=', ISSUE_CFG.token.slice(0,15));
         if(ISSUE_CFG.ready()){
             createIssueFromFeedback(fb).then(function(issue){
                 if(issue && issue.number){
