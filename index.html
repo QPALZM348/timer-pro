@@ -1371,6 +1371,10 @@ function openFriends(){
         window.addEventListener('beforeunload', function(){ MusicPlayer.stop(); });
         // 从 bfcache 恢复时也确保不自动播放
         window.addEventListener('pageshow', function(e){ if(e.persisted) MusicPlayer.stop(); });
+        // 音乐弹窗关闭后刷新浮动条（关闭弹窗时让浮动条出现）
+        document.querySelectorAll('[data-close="musicModal"]').forEach(function(b){
+            b.addEventListener('click', function(){ setTimeout(function(){ MusicPlayer.updateUI(); }, 0); });
+        });
     })();
     // ===== 浮动控制条结束 =====
 
