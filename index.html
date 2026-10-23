@@ -6018,10 +6018,16 @@ function initVipFeatures(){
             return null;
         });
     }
-    // 状态映射：open + 「审核中」标签=审核中；open=待审核；closed=已处理
+    // 状态映射：closed+「审核不通过」=不通过；closed=已处理；open+「审核中」=审核中；open=待审核
     function ticketState(issue){
-        if(issue.state === 'closed'){ return { key:'done', text:'✅ 已处理（已审核）', color:'#4caf50' }; }
-        var reviewing = (issue.labels || []).some(function(l){ return l.name === '审核中'; });
+        var names = (issue.labels || []).map(function(l){ return l.name; });
+        var rejected = names.indexOf('审核不通过') >= 0;
+        if(issue.state === 'closed'){
+            return rejected
+                ? { key:'rejected', text:'❌ 审核不通过', color:'#ff5252' }
+                : { key:'done', text:'✅ 已处理（已审核）', color:'#4caf50' };
+        }
+        var reviewing = names.indexOf('审核中') >= 0;
         return reviewing
             ? { key:'reviewing', text:'🔍 正在审核', color:'#ffb300' }
             : { key:'pending', text:'🕐 待审核', color:'#90caf9' };
