@@ -14,8 +14,7 @@
 <style>
 /* 隐藏Netlify徽章 */
 div[class*="netlify"], div[class*="nf-badge"], div[class*="netlify-badge"], 
-a[class*="netlify"], iframe[src*="netlify"], 
-div[style*="position: fixed"][style*="bottom"], div[style*="position:fixed"][style*="bottom"] {
+a[class*="netlify"], iframe[src*="netlify"] {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
@@ -3902,13 +3901,13 @@ function initVipFeatures(){
         // 使用帮助
         var helpBtn = document.getElementById('aboutHelp');
         if(helpBtn){ helpBtn.onclick = function(){ aboutAlert(
-            '📖 使用帮助\\n\\n'+
-            '• 正计时：点「开始」累计计时，「暂停」可续跑\\n'+
-            '• 倒计时：设置时长后开始，归零自动提醒\\n'+
-            '• 预设模板：保存常用时长，一键启动\\n'+
-            '• 全屏沉浸：双击计时区进入/退出\\n'+
-            '• 语音播报：在设置中开启最后 10 秒报时\\n'+
-            '• 数据导出：设置页可导出全部记录\\n'+
+            '📖 使用帮助\n\n'+
+            '• 正计时：点「开始」累计计时，「暂停」可续跑\n'+
+            '• 倒计时：设置时长后开始，归零自动提醒\n'+
+            '• 预设模板：保存常用时长，一键启动\n'+
+            '• 全屏沉浸：双击计时区进入/退出\n'+
+            '• 语音播报：在设置中开启最后 10 秒报时\n'+
+            '• 数据导出：设置页可导出全部记录\n'+
             '• 清除记录：设置页「清除计算记录」仅清历史，保留设置'
         ); }; }
 
