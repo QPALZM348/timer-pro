@@ -1345,6 +1345,35 @@ function openFriends(){
         };
     }
 
+    // ===== 首页浮动音乐控制条 + 页面关闭时停止 =====
+    (function(){
+        var bar = document.createElement('div');
+        bar.id = 'musicFloatBar';
+        bar.style.cssText = 'position:fixed;left:50%;bottom:20px;transform:translateX(-50%);display:none;align-items:center;gap:10px;background:rgba(20,20,35,0.92);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:8px 12px 8px 16px;border-radius:30px;z-index:9997;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,0.4);';
+        bar.innerHTML = '<span>🎶</span><span id="mfbName" style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span><button id="mfbStop" style="border:none;background:#e53935;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px;line-height:26px;padding:0;">⏸</button>';
+        document.body.appendChild(bar);
+        bar.querySelector('#mfbStop').onclick = function(){ MusicPlayer.stop(); MusicPlayer.renderList(); };
+
+        var origUI = MusicPlayer.updateUI;
+        MusicPlayer.updateUI = function(){
+            origUI.apply(this, arguments);
+            var modal = document.getElementById('musicModal');
+            var modalOpen = modal && !modal.classList.contains('hidden');
+            if(this.isPlaying && this.currentTrack >= 0 && !modalOpen){
+                bar.style.display = 'flex';
+                bar.querySelector('#mfbName').textContent = this.tracks[this.currentTrack].name;
+            } else {
+                bar.style.display = 'none';
+            }
+        };
+        // 页面真正关闭/离开/切后台时停止音乐
+        window.addEventListener('pagehide', function(){ MusicPlayer.stop(); });
+        window.addEventListener('beforeunload', function(){ MusicPlayer.stop(); });
+        // 从 bfcache 恢复时也确保不自动播放
+        window.addEventListener('pageshow', function(e){ if(e.persisted) MusicPlayer.stop(); });
+    })();
+    // ===== 浮动控制条结束 =====
+
     // 添加
     function addFriend(){
         const inp = document.getElementById('friendNameInput');
