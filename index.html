@@ -2093,6 +2093,8 @@ function openFriends(){
                 // 计时结束庆祝动画（VIP 可开关；非VIP不播放）
                 if(celebrateEnabled && checkVipValid(getUserData())){ launchCelebration(); }
                 addHistory('倒计时',`${h}时${m}分${s}秒 → 到点`);
+                // 励志语录：用户开启后计时结束自动弹一句
+                if(window.showQuoteAuto) window.showQuoteAuto();
                 // 成就：累计时长 + 检查
                 accumulateElapsed(cdTotalMs);
                 if(window.addTimerExp) window.addTimerExp(Math.floor(cdTotalMs/1000));
@@ -4674,6 +4676,10 @@ function initVipFeatures(){
                                                 <span class="btn-icon">🎵</span>背景音乐
                                                 <span class="btn-desc" id="musicDesc">5首精选音乐，前2首免费</span>
                                             </button>
+                <button class="settings-btn" id="setQuote">
+                                                <span class="btn-icon">💪</span>励志语录
+                                                <span class="btn-desc">随机推送专注名言，可收藏，计时结束自动鼓励</span>
+                                            </button>
               </div>
             </div>
             <div class="set-panel hidden" data-set="growth">
@@ -5361,6 +5367,45 @@ function initVipFeatures(){
     </div>
 </div>
 
+<!-- 励志语录 / 专注卡片 -->
+<div class="modal-mask hidden" id="quoteModal">
+  <div class="modal-box" style="max-width:440px;background:linear-gradient(145deg,#1f2444,#2a2150);border:1px solid rgba(124,108,255,0.5);">
+    <h3 class="modal-title" style="color:#fff;">💪 励志语录</h3>
+
+    <!-- 卡片视图 -->
+    <div id="quoteCardView">
+      <div style="position:relative;padding:22px 20px;background:rgba(255,255,255,0.05);border-radius:14px;margin-bottom:14px;min-height:150px;display:flex;flex-direction:column;justify-content:center;">
+        <div style="font-size:34px;color:#7c6cff;line-height:1;margin-bottom:6px;font-family:Georgia,serif;">“</div>
+        <div id="quoteText" style="color:#fff;font-size:17px;line-height:1.7;font-weight:600;">加载中…</div>
+        <div id="quoteAuthor" style="color:#a78bfa;font-size:13px;margin-top:12px;text-align:right;">—</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:12px;">
+        <button id="quoteNextBtn" type="button" style="flex:1;min-width:90px;background:linear-gradient(135deg,#7c6cff,#5b8cff);color:#fff;border:none;padding:10px;border-radius:9px;font-size:14px;font-weight:bold;cursor:pointer;">🔄 换一条</button>
+        <button id="quoteFavBtn" type="button" style="flex:1;min-width:90px;background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.25);padding:10px;border-radius:9px;font-size:14px;font-weight:bold;cursor:pointer;">🤍 收藏</button>
+        <button id="quoteListBtn" type="button" style="flex:1;min-width:90px;background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.25);padding:10px;border-radius:9px;font-size:14px;font-weight:bold;cursor:pointer;">📚 我的收藏</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:6px;font-size:12px;color:#b9b0ff;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" id="quoteAutoToggle" style="accent-color:#7c6cff;width:15px;height:15px;">
+          每次计时结束自动弹一句
+        </label>
+      </div>
+    </div>
+
+    <!-- 收藏列表视图 -->
+    <div id="quoteFavView" style="display:none;">
+      <div id="quoteFavList" style="max-height:280px;overflow-y:auto;margin-bottom:14px;"></div>
+      <div class="modal-btn-row">
+        <button id="quoteBackBtn" type="button" style="background:linear-gradient(135deg,#7c6cff,#5b8cff);">← 返回卡片</button>
+      </div>
+    </div>
+
+    <div class="modal-btn-row" id="quoteCloseRow">
+      <button data-close="quoteModal" style="background:linear-gradient(135deg,#6a11cb,#2575fc);">关闭</button>
+    </div>
+  </div>
+</div>
+
 <!-- 积分商城 -->
 <div class="modal-mask hidden" id="shopModal">
     <div class="modal-box" style="max-width:480px;background:linear-gradient(135deg,#1a1d36,#2d1b4e);border:1px solid rgba(255,215,0,0.3);">
@@ -5413,6 +5458,142 @@ function initVipFeatures(){
      alert('🎁 兑换成功，已到账 '+CODES[c]+' 积分');closeM();
    }else alert('兑换码无效。积分兑换码形如 POINTS-10000');
  });
+})();
+</script>
+
+<!-- 励志语录逻辑 -->
+<script>
+(function(){
+  var QUOTES=[
+    {t:"专注和简单，一直是我的秘诀之一。",a:"乔布斯"},
+    {t:"你热爱生命吗？那么别浪费时间，因为时间是组成生命的材料。",a:"富兰克林"},
+    {t:"成功的秘诀在于持之以恒。",a:"狄更斯"},
+    {t:"不积跬步，无以至千里；不积小流，无以成江海。",a:"荀子"},
+    {t:"天行健，君子以自强不息。",a:"《周易》"},
+    {t:"宝剑锋从磨砺出，梅花香自苦寒来。",a:"古训"},
+    {t:"业精于勤，荒于嬉；行成于思，毁于随。",a:"韩愈"},
+    {t:"路漫漫其修远兮，吾将上下而求索。",a:"屈原"},
+    {t:"千淘万漉虽辛苦，吹尽狂沙始到金。",a:"刘禹锡"},
+    {t:"长风破浪会有时，直挂云帆济沧海。",a:"李白"},
+    {t:"会当凌绝顶，一览众山小。",a:"杜甫"},
+    {t:"少壮不努力，老大徒伤悲。",a:"《长歌行》"},
+    {t:"黑发不知勤学早，白首方悔读书迟。",a:"颜真卿"},
+    {t:"读书破万卷，下笔如有神。",a:"杜甫"},
+    {t:"世上无难事，只怕有心人。",a:"民间谚语"},
+    {t:"只要功夫深，铁杵磨成针。",a:"民间谚语"},
+    {t:"锲而不舍，金石可镂。",a:"荀子"},
+    {t:"生活就像海洋，只有意志坚强的人，才能到达彼岸。",a:"马克思"},
+    {t:"人的差异在于业余时间。",a:"爱因斯坦"},
+    {t:"天才是百分之一的灵感，加百分之九十九的汗水。",a:"爱迪生"},
+    {t:"不要为成功而努力，要为做一个有价值的人而努力。",a:"爱因斯坦"},
+    {t:"行动是治愈恐惧的良药。",a:"戴尔·卡耐基"},
+    {t:"最困难之时，就是我们离成功不远之日。",a:"恺撒"},
+    {t:"每一个不曾起舞的日子，都是对生命的辜负。",a:"尼采"},
+    {t:"凡是杀不死你的，都会使你更强大。",a:"尼采"},
+    {t:"我们最大的荣耀，不在于永不跌倒，而在于每次跌倒后都能爬起来。",a:"曼德拉"},
+    {t:"不经历风雨，怎能见彩虹。",a:"民间谚语"},
+    {t:"心之所向，素履以往。",a:"七堇年"},
+    {t:"念念不忘，必有回响。",a:"民间谚语"},
+    {t:"但行好事，莫问前程。",a:"古训"},
+    {t:"你若盛开，蝴蝶自来。",a:"林徽因"},
+    {t:"自律，给我自由。",a:"康德"},
+    {t:"现在的努力，是为了以后有更多选择。",a:"佚名"},
+    {t:"熬过无人问津的日子，才有诗和远方。",a:"佚名"},
+    {t:"所谓幸运，不过是机会遇上了努力。",a:"佚名"},
+    {t:"星光不问赶路人，时光不负有心人。",a:"佚名"},
+    {t:"凡是值得做的事，就值得做好。",a:"查斯特菲尔德"},
+    {t:"一次只做一件事，做到极致。",a:"佚名"},
+    {t:"专注当下，是对抗焦虑最好的办法。",a:"佚名"},
+    {t:"完成比完美更重要。",a:"佚名"},
+    {t:"不怕慢，就怕站。",a:"民间谚语"},
+    {t:"今天的自己，要比昨天更好一点。",a:"佚名"},
+    {t:"你只管努力，剩下的交给时间。",a:"佚名"},
+    {t:"种一棵树最好的时间是十年前，其次是现在。",a:"非洲谚语"},
+    {t:"行动，是打败焦虑的唯一方法。",a:"佚名"},
+    {t:"把时间花在进步上，而不是抱怨上。",a:"佚名"},
+    {t:"愿你眼里有光，心中有梦，脚下有路。",a:"佚名"},
+    {t:"谁终将声震人间，必长久深自缄默。",a:"尼采"}
+  ];
+  var modal=document.getElementById('quoteModal');
+  var cardView=document.getElementById('quoteCardView');
+  var favView=document.getElementById('quoteFavView');
+  var qText=document.getElementById('quoteText');
+  var qAuthor=document.getElementById('quoteAuthor');
+  var favBtn=document.getElementById('quoteFavBtn');
+  var autoToggle=document.getElementById('quoteAutoToggle');
+  var current=0, last=-1;
+
+  function getFav(){ try{return JSON.parse(localStorage.getItem('favQuotes')||'[]');}catch(e){return [];} }
+  function setFav(a){ localStorage.setItem('favQuotes',JSON.stringify(a)); }
+  function isFav(i){ return getFav().indexOf(i)>=0; }
+
+  function render(i){
+    current=i;
+    qText.textContent=QUOTES[i].t;
+    qAuthor.textContent='— '+QUOTES[i].a;
+    if(isFav(i)){ favBtn.innerHTML='❤️ 已收藏'; favBtn.style.background='linear-gradient(135deg,#ff5e7e,#ff8a5b)'; favBtn.style.borderColor='transparent'; }
+    else{ favBtn.innerHTML='🤍 收藏'; favBtn.style.background='rgba(255,255,255,0.1)'; favBtn.style.borderColor='rgba(255,255,255,0.25)'; }
+  }
+  function randomQuote(){
+    if(QUOTES.length<=1){ render(0); return; }
+    var i;
+    do{ i=Math.floor(Math.random()*QUOTES.length); }while(i===last);
+    last=i; render(i);
+  }
+  function showCard(){
+    cardView.style.display='block'; favView.style.display='none';
+    document.getElementById('quoteCloseRow').style.display='flex';
+  }
+  // 打开弹窗（供外部调用）
+  window.showQuote=function(){
+    showCard();
+    modal.classList.remove('hidden'); modal.classList.add('show');
+    randomQuote();
+  };
+  window.showQuoteAuto=function(){
+    if(localStorage.getItem('quoteAuto')==='1'){ window.showQuote(); }
+  };
+
+  document.getElementById('quoteNextBtn').addEventListener('click',randomQuote);
+  favBtn.addEventListener('click',function(){
+    var f=getFav();
+    var pos=f.indexOf(current);
+    if(pos>=0){ f.splice(pos,1); setFav(f); if(window.showToast)showToast('已取消收藏'); }
+    else{ f.push(current); setFav(f); if(window.showToast)showToast('已收藏到语录'); }
+    render(current);
+  });
+  document.getElementById('quoteListBtn').addEventListener('click',function(){
+    cardView.style.display='none'; favView.style.display='block';
+    document.getElementById('quoteCloseRow').style.display='none';
+    var f=getFav();
+    var box=document.getElementById('quoteFavList');
+    if(!f.length){ box.innerHTML='<div style="text-align:center;color:#aaa;padding:30px 10px;">还没有收藏的语录<br>点「🤍 收藏」存下你喜欢的句子</div>'; return; }
+    box.innerHTML='';
+    // 最新收藏在前
+    f.slice().reverse().forEach(function(idx){
+      var q=QUOTES[idx]; if(!q)return;
+      var row=document.createElement('div');
+      row.style.cssText='padding:12px;margin-bottom:8px;background:rgba(255,255,255,0.05);border-radius:10px;border-left:3px solid #7c6cff;cursor:pointer;';
+      row.innerHTML='<div style="color:#fff;font-size:14px;line-height:1.6;">'+q.t+'</div><div style="color:#a78bfa;font-size:12px;margin-top:6px;text-align:right;">— '+q.a+'</div>';
+      row.addEventListener('click',function(){ showCard(); render(idx); });
+      box.appendChild(row);
+    });
+  });
+  document.getElementById('quoteBackBtn').addEventListener('click',showCard);
+
+  // 自动弹出开关
+  autoToggle.checked=(localStorage.getItem('quoteAuto')==='1');
+  autoToggle.addEventListener('change',function(){
+    localStorage.setItem('quoteAuto',autoToggle.checked?'1':'0');
+    if(window.showToast)showToast(autoToggle.checked?'计时结束将自动弹语录':'已关闭自动弹语录');
+  });
+
+  // 点击遮罩关闭
+  modal.addEventListener('click',function(e){ if(e.target===modal){ modal.classList.add('hidden'); modal.classList.remove('show'); } });
+
+  // 入口：设置按钮
+  var setBtn=document.getElementById('setQuote');
+  if(setBtn){ setBtn.addEventListener('click',window.showQuote); }
 })();
 </script>
 
