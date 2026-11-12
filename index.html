@@ -1889,7 +1889,7 @@ function openFriends(){
             if(!p)return alert('填写手机号');if(c!==currentCode)return alert('验证码错误');
             if(isRegisterMode){
                 if(u.account)return alert('已登录账号，请退出');
-                const nu=grantLevel({account:p,password:'',phone:p,avatar:'https://picsum.photos/id/1001/60/60',isVip:false,vipExpireTime:null});
+                const nu=grantLevel({account:p,password:'',phone:p,avatar:'',isVip:false,vipExpireTime:null});
                 saveUserData(nu);alert(levelTxt?('注册成功，'+levelTxt+'已激活！'):'注册成功自动登录');refreshUserUI();phoneInput.value=codeInput.value='';currentCode='';
                 markVipStorage();__afterCode();
             }else{
@@ -1904,7 +1904,7 @@ function openFriends(){
         if(!acc||!pwd)return alert('账号密码不能为空');
         if(isRegisterMode){
             if(u.account)return alert('账号已存在');
-            const nu=grantLevel({account:acc,password:pwd,phone:'',avatar:'https://picsum.photos/id/1001/60/60',isVip:false,vipExpireTime:null});
+            const nu=grantLevel({account:acc,password:pwd,phone:'',avatar:'',isVip:false,vipExpireTime:null});
             saveUserData(nu);alert(levelTxt?('注册成功，'+levelTxt+'已激活！'):'注册成功');isRegisterMode=false;submitBtn.textContent='登录';switchModeBtn.textContent='切换注册';accInput.value=pwdInput.value='';
             markVipStorage();
             // 后端建档（fire-and-forget，不阻塞）
@@ -4910,10 +4910,10 @@ function initVipFeatures(){
                 <div class="avatar-select-box">
                     <p style="font-size:17px;">更换头像：</p>
                     <div class="avatar-list">
-                        <img class="avatar-item" data-src="https://picsum.photos/id/1001/60/60" src="https://picsum.photos/id/1001/60/60">
-                        <img class="avatar-item" data-src="https://picsum.photos/id/1002/60/60" src="https://picsum.photos/id/1002/60/60">
-                        <img class="avatar-item" data-src="https://picsum.photos/id/1003/60/60" src="https://picsum.photos/id/1003/60/60">
-                        <img class="avatar-item" data-src="https://picsum.photos/id/1004/60/60" src="https://picsum.photos/id/1004/60/60">
+                        <img class="avatar-item" data-src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%237f00ff'/><stop offset='1' stop-color='%23e100ff'/></linearGradient></defs><circle cx='30' cy='30' r='30' fill='url(%23g)'/></svg>" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%237f00ff'/><stop offset='1' stop-color='%23e100ff'/></linearGradient></defs><circle cx='30' cy='30' r='30' fill='url(%23g)'/></svg>">
+                        <img class="avatar-item" data-src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2300c6ff'/><stop offset='1' stop-color='%230072ff'/></linearGradient></defs><circle cx='30' cy='30' r='30' fill='url(%23g)'/></svg>" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2300c6ff'/><stop offset='1' stop-color='%230072ff'/></linearGradient></defs><circle cx='30' cy='30' r='30' fill='url(%23g)'/></svg>">
+                        <img class="avatar-item" data-src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23ff6a00'/><stop offset='1' stop-color='%23ee0979'/></linearGradient></defs><circle cx='30' cy='30' r='30' fill='url(%23g)'/></svg>" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23ff6a00'/><stop offset='1' stop-color='%23ee0979'/></linearGradient></defs><circle cx='30' cy='30' r='30' fill='url(%23g)'/></svg>">
+                        <img class="avatar-item" data-src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2311998e'/><stop offset='1' stop-color='%2338ef7d'/></linearGradient></defs><circle cx='30' cy='30' r='30' fill='url(%23g)'/></svg>" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%2311998e'/><stop offset='1' stop-color='%2338ef7d'/></linearGradient></defs><circle cx='30' cy='30' r='30' fill='url(%23g)'/></svg>">
                     </div>
                 </div>
             </div>
