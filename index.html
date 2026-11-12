@@ -1913,6 +1913,7 @@ function openFriends(){
             if(u.account===acc&&u.password===pwd){
                 grantLevel(u);saveUserData(u);markVipStorage();
                 alert(levelTxt?('登录成功，'+levelTxt+'已激活！'):'登录成功');refreshUserUI();accInput.value=pwdInput.value='';
+                if(window.cloudPull)window.cloudPull();
             }else alert('账号密码错误');
         }
         if(actCode)document.getElementById('activationCodeInput').value='';
@@ -6677,12 +6678,36 @@ window.applyRemoteUser=function(remote){
   if(!remote)return;
   var u=JSON.parse(localStorage.getItem('timerUser')||'{}');
   ['isVip','vipExpireTime','svip','svipExpireTime','svipLevel','points'].forEach(function(k){
-    if(remote[k]!==undefined)u[k]=remote[k];
+    if(remote[k]!==undefined&&remote[k]!==null)u[k]=remote[k];
   });
   localStorage.setItem('timerUser',JSON.stringify(u));
   try{localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}catch(e){}
   try{refreshUserUI();updateVipLocks();}catch(e){}
 };
+/* 拉取云端会员状态（data 传空，云端字段返回为准） */
+window.cloudPull=function(){
+  try{
+    var u=JSON.parse(localStorage.getItem('timerUser')||'{}');
+    if(!u.account||!u.password)return;
+    window.apiSync(u.account,u.password,{}).then(function(r){
+      if(r&&r.ok&&r.user)window.applyRemoteUser(r.user);
+    });
+  }catch(e){}
+};
+/* 把本地关键状态推到云端 */
+window.cloudPush=function(){
+  try{
+    var u=JSON.parse(localStorage.getItem('timerUser')||'{}');
+    if(!u.account||!u.password)return;
+    var data={isVip:u.isVip,vipExpireTime:u.vipExpireTime,svip:u.svip,svipExpireTime:u.svipExpireTime,svipLevel:u.svipLevel,points:u.points};
+    window.apiSync(u.account,u.password,data);
+  }catch(e){}
+};
+/* 启动时若已登录，自动拉一次云端；并每 60 秒上传一次 */
+window.addEventListener('load',function(){
+  setTimeout(window.cloudPull,800);
+  setInterval(window.cloudPush,60000);
+});
 </script>
 <script>
 /* ===== 计时器Pro 手机版增强：防锁屏 · 标题倒计时 · 全屏 · 振动 · PWA ===== */
