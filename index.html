@@ -1787,24 +1787,42 @@ function openFriends(){
     // 激活码激活 VIP
     const activateCodeBtn = document.getElementById('activateCodeBtn');
     if(activateCodeBtn){
-        activateCodeBtn.onclick=()=>{
+        activateCodeBtn.onclick=async ()=>{
             const codeInput = document.getElementById('vipActivationCode');
             const code = codeInput ? codeInput.value.trim().replace(/\s+/g,'') : '';
             if(!code)return alert('请输入激活码');
+            const up = code.toUpperCase();
             const VIP_CODES = ['TIMER-PRO-8888','VIP-6666-9999','PRO-2024-8888','TP-VIP-88888','计时器PRO-VIP'];
             const SVIP_CODES = ['SVIP-8888-2026','TIMER-SVIP-9999'];
             const POINT_CODES = {'POINTS-10000':10000,'WELCOME-10000':10000};
             const SVIP_PLAN_CODES = {'SVIP-M-153':30,'SVIP-Q-200':90,'SVIP-Y-360':365};
+            const u = getUserData();
+            const FOREVER = new Date('2099-12-31T23:59:59').getTime();
             const __otc=window.svipVerifyOneTime?window.svipVerifyOneTime(up):null;
             if(__otc){
                 if(__otc.used){alert('该激活码已被使用，无法重复开通');}
                 else{window.svipConsumeCode(__otc.code,__otc.days);alert('💠 SVIP激活成功！已开通 '+__otc.days+' 天');vipModal.classList.add('hidden');if(codeInput)codeInput.value='';}
                 return;
             }
-            const up = code.toUpperCase();
-            const u = getUserData();
             if(!u.account){ alert('请先登录或注册账号，再使用激活码'); return; }
-            const FOREVER = new Date('2099-12-31T23:59:59').getTime();
+
+            // 后端优先：已登录且有密码，走 KV 权威核销（跨设备、防重复）
+            if(u.password && window.apiRedeem){
+                const res=await window.apiRedeem(u.account,u.password,up);
+                if(res && res.ok){
+                    window.applyRemoteUser(res.user||res);
+                    alert('💠 兑换成功：'+(res.msg||'已开通'));
+                    vipModal.classList.add('hidden');if(codeInput)codeInput.value='';
+                    return;
+                }
+                if(res && !res.__neterr){
+                    // 后端明确拒绝（无效/已用/密码错）：直接提示，不回退本地硬编码
+                    alert(res.msg||'激活码无效');
+                    return;
+                }
+                // 网络异常：降级到本地兜底逻辑（见下方）
+            }
+
             if(SVIP_CODES.includes(up)){
                 u.svip=true;u.svipExpireTime=FOREVER;u.isVip=true;u.vipExpireTime=FOREVER;if(!u.svipLevel||u.svipLevel<1)u.svipLevel=1;saveUserData(u);
                 localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');
@@ -1889,6 +1907,8 @@ function openFriends(){
             const nu=grantLevel({account:acc,password:pwd,phone:'',avatar:'https://picsum.photos/id/1001/60/60',isVip:false,vipExpireTime:null});
             saveUserData(nu);alert(levelTxt?('注册成功，'+levelTxt+'已激活！'):'注册成功');isRegisterMode=false;submitBtn.textContent='登录';switchModeBtn.textContent='切换注册';accInput.value=pwdInput.value='';
             markVipStorage();
+            // 后端建档（fire-and-forget，不阻塞）
+            if(window.apiRegister){window.apiRegister(acc,pwd).then(function(r){if(r&&!r.ok&&!r.__neterr)console.warn('后端建档:',r.msg);});}
         }else{
             if(u.account===acc&&u.password===pwd){
                 grantLevel(u);saveUserData(u);markVipStorage();
@@ -6640,6 +6660,30 @@ function initVipFeatures(){
 <!-- 云同步模块已移除 -->
 
 <!-- PocketBase云同步模块已移除 -->
+<script>
+/* ===== 后端桥接：timerapi.de5.net (Cloudflare Worker + KV) ===== */
+window.API_BASE='https://timerapi.de5.net';
+window.apiPost=async function(path,data){
+  try{
+    var r=await fetch(window.API_BASE+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    return await r.json();
+  }catch(e){return {ok:false,msg:'网络异常，请检查连接后重试',__neterr:true};}
+};
+window.apiRegister=function(account,password){return window.apiPost('/api/register',{account:account,password:password});};
+window.apiRedeem=function(account,password,code){return window.apiPost('/api/redeem',{account:account,password:password,code:code});};
+window.apiSync=function(account,password,data){return window.apiPost('/api/sync',{account:account,password:password,data:data});};
+/* 用后端返回的用户状态刷新本地会员字段 */
+window.applyRemoteUser=function(remote){
+  if(!remote)return;
+  var u=JSON.parse(localStorage.getItem('timerUser')||'{}');
+  ['isVip','vipExpireTime','svip','svipExpireTime','svipLevel','points'].forEach(function(k){
+    if(remote[k]!==undefined)u[k]=remote[k];
+  });
+  localStorage.setItem('timerUser',JSON.stringify(u));
+  try{localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}catch(e){}
+  try{refreshUserUI();updateVipLocks();}catch(e){}
+};
+</script>
 <script>
 /* ===== 计时器Pro 手机版增强：防锁屏 · 标题倒计时 · 全屏 · 振动 · PWA ===== */
 (function(){
