@@ -1914,7 +1914,26 @@ function openFriends(){
                 grantLevel(u);saveUserData(u);markVipStorage();
                 alert(levelTxt?('登录成功，'+levelTxt+'已激活！'):'登录成功');refreshUserUI();accInput.value=pwdInput.value='';
                 if(window.cloudPull)window.cloudPull();
-            }else alert('账号密码错误');
+            }else{
+                // 本地找不到，调后端验证（换设备/清缓存后也能登录）
+                if(window.apiSync){
+                    window.apiSync(acc,pwd,{}).then(function(r){
+                        if(r&&r.ok&&r.user){
+                            const nu={account:acc,password:pwd,avatar:'',phone:r.user.phone||'',
+                                isVip:r.user.isVip,vipExpireTime:r.user.vipExpireTime,
+                                svip:r.user.svip,svipExpireTime:r.user.svipExpireTime,
+                                svipLevel:r.user.svipLevel,points:r.user.points};
+                            saveUserData(nu);markVipStorage();
+                            alert(levelTxt?('登录成功，'+levelTxt+'已激活！'):'登录成功');refreshUserUI();
+                            accInput.value=pwdInput.value='';
+                        }else{
+                            alert((r&&r.msg)||'账号密码错误');
+                        }
+                    });
+                }else{
+                    alert('账号密码错误');
+                }
+            }
         }
         if(actCode)document.getElementById('activationCodeInput').value='';
     };
