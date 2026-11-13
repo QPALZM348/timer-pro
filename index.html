@@ -6691,9 +6691,11 @@ window.cloudPull=function(){
     if(!u.account||!u.password)return;
     window.apiSync(u.account,u.password,{}).then(function(r){
       if(r&&r.ok&&r.user){window.applyRemoteUser(r.user);return;}
-      // 后端返回封禁错误：每次都弹提示，不让用
+      // 后端返回封禁错误：弹一次提示，直接退出登录
       if(r&&!r.ok&&!r.__neterr&&/封禁/.test(r.msg||'')){
         alert('⚠️ '+r.msg);
+        localStorage.removeItem('timerUser');
+        try{location.reload();}catch(e){location.href=location.pathname;}
       }
     });
   }catch(e){}
