@@ -34,6 +34,11 @@ button.secondary{background:#333}
 <div class="card">
 <label>管理员密钥（ADMIN_SECRET）</label>
 <input type="password" id="key" placeholder="输入管理员密钥">
+<label>会员类型</label>
+<select id="type">
+  <option value="svip">💎 SVIP（含 VIP 全部权益）</option>
+  <option value="vip">👑 VIP（基础会员）</option>
+</select>
 <label>套餐</label>
 <select id="plan">
   <option value="M">月卡（30天）</option>
@@ -61,6 +66,7 @@ function hide(el){el.style.display='none';}
 async function gen(){
   const key=document.getElementById('key').value.trim();
   const plan=document.getElementById('plan').value;
+  const type=document.getElementById('type').value;
   const count=parseInt(document.getElementById('count').value,10)||1;
   if(!key)return show(document.getElementById('err'),'请先输入管理员密钥');
   hide(document.getElementById('err'));hide(document.getElementById('ok'));
@@ -68,7 +74,7 @@ async function gen(){
     const r=await fetch(API+'/api/admin/gen',{
       method:'POST',
       headers:{'Content-Type':'application/json','X-Admin-Key':key},
-      body:JSON.stringify({plan,count})
+      body:JSON.stringify({plan,type,num:count})
     });
     const d=await r.json();
     if(!d.ok){show(document.getElementById('err'),d.msg||'生成失败');return;}
