@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>计时器 Pro · 发卡后台</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0f0c29;color:#eee;min-height:100vh;padding:20px}
+.wrap{max-width:500px;margin:0 auto}
+h1{font-size:22px;margin-bottom:20px;text-align:center;background:linear-gradient(90deg,#7f00ff,#e100ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.card{background:#1a1a2e;border-radius:12px;padding:18px;margin-bottom:14px;border:1px solid #2a2a4a}
+label{display:block;font-size:13px;color:#aaa;margin:10px 0 6px}
+input,select{width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#0f0c29;color:#eee;font-size:16px;outline:none}
+input:focus{border-color:#7f00ff}
+.row{display:flex;gap:10px}
+.row>div{flex:1}
+button{width:100%;padding:14px;border:none;border-radius:10px;background:linear-gradient(90deg,#7f00ff,#e100ff);color:#fff;font-size:16px;font-weight:bold;cursor:pointer;margin-top:14px}
+button:active{opacity:0.8}
+button.secondary{background:#333}
+.result{margin-top:14px;padding:12px;background:#0f3460;border-radius:8px;display:none}
+.result.show{display:block}
+.code{font-family:monospace;font-size:15px;padding:8px 0;border-bottom:1px solid #2a4a6a;color:#7de6e0;word-break:break-all}
+.code:last-child{border-bottom:none}
+.tip{font-size:12px;color:#888;margin-top:8px;line-height:1.6}
+.err{color:#ff6b6b;font-size:14px;margin-top:10px;display:none}
+.ok{color:#7dff9a;font-size:14px;margin-top:10px;display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🎫 发卡后台</h1>
+
+<div class="card">
+<label>管理员密钥（ADMIN_SECRET）</label>
+<input type="password" id="key" placeholder="输入管理员密钥">
+<label>套餐</label>
+<select id="plan">
+  <option value="M">月卡（30天）</option>
+  <option value="Q">季卡（90天）</option>
+  <option value="Y">年卡（365天）</option>
+</select>
+<label>数量</label>
+<input type="number" id="count" value="1" min="1" max="50">
+<button onclick="gen()">生成激活码</button>
+<div class="err" id="err"></div>
+<div class="ok" id="ok"></div>
+</div>
+
+<div class="card">
+<label>本次生成的码</label>
+<div class="result" id="result"></div>
+<p class="tip">生成后把码发给玩家，玩家在 App 内「会员 → 激活码」输入即可开通。码一次性有效，全国唯一。</p>
+</div>
+</div>
+
+<script>
+const API='https://timerapi.de5.net';
+function show(el,msg){el.style.display='block';el.textContent=msg;}
+function hide(el){el.style.display='none';}
+async function gen(){
+  const key=document.getElementById('key').value.trim();
+  const plan=document.getElementById('plan').value;
+  const count=parseInt(document.getElementById('count').value,10)||1;
+  if(!key)return show(document.getElementById('err'),'请先输入管理员密钥');
+  hide(document.getElementById('err'));hide(document.getElementById('ok'));
+  try{
+    const r=await fetch(API+'/api/admin/gen',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Admin-Key':key},
+      body:JSON.stringify({plan,count})
+    });
+    const d=await r.json();
+    if(!d.ok){show(document.getElementById('err'),d.msg||'生成失败');return;}
+    show(document.getElementById('ok'),'✅ 成功生成 '+d.codes.length+' 个码');
+    const box=document.getElementById('result');
+    box.innerHTML='';
+    d.codes.forEach(c=>{
+      const div=document.createElement('div');
+      div.className='code';div.textContent=c;
+      box.appendChild(div);
+    });
+    box.classList.add('show');
+  }catch(e){
+    show(document.getElementById('err'),'网络异常：'+e.message);
+  }
+}
+</script>
+</body>
+</html>
