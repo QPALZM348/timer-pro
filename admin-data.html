@@ -57,7 +57,7 @@ th{color:#888;font-weight:normal;font-size:12px}
 
 <div class="card" id="usersPanel">
   <table id="userTable">
-    <thead><tr><th>账号</th><th>会员</th><th>到期时间</th><th>积分</th></tr></thead>
+    <thead><tr><th>账号</th><th>会员</th><th>到期时间</th><th>积分</th><th>操作</th></tr></thead>
     <tbody></tbody>
   </table>
   <div class="empty" id="userEmpty">暂无用户数据</div>
@@ -110,7 +110,11 @@ async function loadAll(){
       if(u.svip&&u.svipExpireTime>Date.now())badge='<span class="badge svip">SVIP</span>';
       else if(u.isVip&&u.vipExpireTime>Date.now())badge='<span class="badge vip">VIP</span>';
       else badge='<span class="badge free">普通</span>';
-      tr.innerHTML=`<td>${u.account||''}</td><td>${badge}</td><td>${fmt(u.svipExpireTime||u.vipExpireTime)}</td><td>${u.points||0}</td>`;
+      if(u.banned)badge+=' <span class="badge" style="background:#5a2d2d;color:#ff6b6b">已封禁</span>';
+      const btn=u.banned
+        ?`<button style="padding:6px 10px;font-size:12px;margin:0;background:#2d5a2d" onclick="banUser('${u.account}',false)">解封</button>`
+        :`<button style="padding:6px 10px;font-size:12px;margin:0;background:#5a2d2d" onclick="banUser('${u.account}',true)">封禁</button>`;
+      tr.innerHTML=`<td>${u.account||''}</td><td>${badge}</td><td>${fmt(u.svipExpireTime||u.vipExpireTime)}</td><td>${u.points||0}</td><td>${btn}</td>`;
       utb.appendChild(tr);
     });
     document.getElementById('userEmpty').style.display=ud.users.length?'none':'block';
@@ -128,6 +132,21 @@ async function loadAll(){
   }catch(e){
     document.getElementById('err').textContent='网络异常：'+e.message;
   }
+}
+async function banUser(account,ban){
+  const key=document.getElementById('key').value.trim();
+  if(!key)return;
+  if(ban&&!confirm(`确认封禁账号 ${account}？封禁后该账号无法登录和兑换。`))return;
+  try{
+    const r=await fetch(API+'/api/admin/ban',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Admin-Key':key},
+      body:JSON.stringify({account,ban})
+    });
+    const d=await r.json();
+    if(d.ok){loadAll();}
+    else{alert(d.msg||'操作失败');}
+  }catch(e){alert('网络异常：'+e.message);}
 }
 </script>
 </body>
