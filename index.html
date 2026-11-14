@@ -2872,6 +2872,7 @@ function openFriends(){
         const p = getPoints() + n;
         localStorage.setItem('userPoints', p);
         updatePointsUI();
+        if(window.cloudPush)window.cloudPush();
         return p;
     }
     function spendPoints(n){
@@ -2879,6 +2880,7 @@ function openFriends(){
         if(p < n) return false;
         localStorage.setItem('userPoints', p - n);
         updatePointsUI();
+        if(window.cloudPush)window.cloudPush();
         return true;
     }
     function updatePointsUI(){
@@ -6762,8 +6764,12 @@ window.applyRemoteUser=function(remote){
   // 积分是独立存储 userPoints，云端拉到后写回 userPoints
   if(remote.points!==undefined&&remote.points!==null){
     u.points=remote.points;
-    localStorage.setItem('userPoints',String(remote.points));
-    try{updatePointsUI();}catch(e){}
+    var localPts=parseInt(localStorage.getItem('userPoints')||'0');
+    // 云端比本地多才更新（后台加积分）；本地更少说明刚花了，不覆盖
+    if(remote.points>localPts){
+      localStorage.setItem('userPoints',String(remote.points));
+      try{updatePointsUI();}catch(e){}
+    }
   }
   localStorage.setItem('timerUser',JSON.stringify(u));
   try{localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}catch(e){}
