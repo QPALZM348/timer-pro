@@ -133,7 +133,10 @@ function renderCodes(){
   const ctb=document.querySelector('#codeTable tbody');ctb.innerHTML='';
   allCodes.forEach(c=>{
     const tr=document.createElement('tr');
-    const typeBadge=c.type==='vip'?'<span class="badge vip">VIP</span>':'<span class="badge svip">SVIP</span>';
+    let typeBadge;
+    if(c.type==='vip')typeBadge='<span class="badge vip">VIP</span>';
+    else if(c.type==='points')typeBadge='<span class="badge" style="background:#5a4a2d;color:#ffd700;">积分+'+(c.points||0)+'</span>';
+    else typeBadge='<span class="badge svip">SVIP</span>';
     const statusBadge=c.status==='used'?'<span class="badge used">已用</span>':'<span class="badge unused">未用</span>';
     tr.innerHTML=`<td>${c.code}</td><td>${typeBadge}</td><td>${statusBadge}</td><td>${c.account||'-'}</td><td><button class="mini-btn red" onclick="delCode('${c.code}')">删</button></td>`;
     ctb.appendChild(tr);
