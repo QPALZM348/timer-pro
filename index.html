@@ -1335,8 +1335,49 @@ function openFriends(){
     // 音乐停止按钮
     const musicStopBtn = document.getElementById('musicStopBtn');
     if(musicStopBtn){
-        musicStopBtn.onclick = function(){ MusicPlayer.stop(); MusicPlayer.renderList(); };
+        musicStopBtn.onclick = function(){ MusicPlayer.stop(); MusicPlayer.renderList(); stopSearchAudio(); };
     }
+    // 音乐搜索
+    let searchAudio=null;
+    function stopSearchAudio(){ if(searchAudio){searchAudio.pause();searchAudio=null;} }
+    const musicSearchBtn=document.getElementById('musicSearchBtn');
+    const musicSearchInput=document.getElementById('musicSearchInput');
+    const musicSearchResult=document.getElementById('musicSearchResult');
+    function doMusicSearch(){
+        const kw=(musicSearchInput.value||'').trim();
+        if(!kw)return;
+        musicSearchResult.style.display='block';
+        musicSearchResult.innerHTML='<div style="text-align:center;color:#999;padding:20px;">搜索中...</div>';
+        fetch(window.API_BASE+'/api/music/search?keyword='+encodeURIComponent(kw))
+          .then(r=>r.json())
+          .then(d=>{
+            if(!d.ok||!d.songs||!d.songs.length){
+              musicSearchResult.innerHTML='<div style="text-align:center;color:#999;padding:20px;">没找到相关歌曲</div>';
+              return;
+            }
+            musicSearchResult.innerHTML='';
+            d.songs.forEach(s=>{
+              const item=document.createElement('div');
+              item.style.cssText='padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.08);cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
+              item.innerHTML='<div style="flex:1;min-width:0;"><div style="color:#fff;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+s.name+'</div><div style="color:#888;font-size:12px;">'+s.artist+'</div></div><span style="color:#a78bfa;font-size:12px;margin-left:8px;">▶</span>';
+              item.onclick=function(){
+                stopSearchAudio();
+                searchAudio=new Audio(s.url);
+                searchAudio.volume=(document.getElementById('musicVolume').value||60)/100;
+                searchAudio.play().catch(e=>{musicSearchResult.innerHTML='<div style="text-align:center;color:#ff6b6b;padding:20px;">播放失败，这首歌可能需要VIP</div>';});
+                document.getElementById('musicName').textContent=s.name;
+                document.getElementById('musicStatus').textContent='正在播放：'+s.artist;
+                document.getElementById('musicIcon').textContent='🎶';
+                // 停掉白噪音
+                MusicPlayer.stop();
+              };
+              musicSearchResult.appendChild(item);
+            });
+          })
+          .catch(e=>{musicSearchResult.innerHTML='<div style="text-align:center;color:#ff6b6b;padding:20px;">网络异常</div>';});
+    }
+    if(musicSearchBtn)musicSearchBtn.onclick=doMusicSearch;
+    if(musicSearchInput)musicSearchInput.onkeydown=function(e){if(e.key==='Enter')doMusicSearch();};
     // 音量控制
     const musicVolume = document.getElementById('musicVolume');
     if(musicVolume){
@@ -5396,7 +5437,12 @@ function initVipFeatures(){
             <div style="font-size:16px;color:#fff;font-weight:bold;" id="musicName">未播放</div>
             <div style="font-size:12px;color:#a78bfa;margin-top:4px;" id="musicStatus">选择一首音乐开始播放</div>
         </div>
-        <div id="musicList" style="max-height:280px;overflow-y:auto;margin-bottom:16px;"></div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <input type="text" id="musicSearchInput" placeholder="搜索歌曲/歌手（几万首免费音乐）" style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:14px;outline:none;">
+            <button id="musicSearchBtn" style="padding:10px 16px;margin:0;border-radius:8px;border:none;background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;font-size:14px;cursor:pointer;">搜索</button>
+        </div>
+        <div id="musicSearchResult" style="max-height:300px;overflow-y:auto;margin-bottom:12px;display:none;"></div>
+        <div id="musicList" style="max-height:200px;overflow-y:auto;margin-bottom:16px;"></div>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;">
             <span style="color:#ccc;font-size:14px;">🔊</span>
             <input type="range" id="musicVolume" min="0" max="100" value="60" style="flex:1;accent-color:#6a11cb;">
