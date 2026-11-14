@@ -5560,7 +5560,31 @@ function initVipFeatures(){
      var pd=document.getElementById('userPointsDisplay');if(pd)pd.textContent=pts;
      var td=document.getElementById('topPointsDisplay');if(td)td.textContent=pts;
      alert('🎁 兑换成功，已到账 '+CODES[c]+' 积分');closeM();
-   }else alert('兑换码无效。积分兑换码形如 POINTS-10000');
+     return;
+   }
+   // 本地硬编码码不匹配，走后端兑换接口
+   try{
+     var u=JSON.parse(localStorage.getItem('timerUser')||'{}');
+     if(!u.account||!u.password){alert('请先登录');return;}
+     fetch(window.API_BASE+'/api/redeem',{
+       method:'POST',
+       headers:{'Content-Type':'application/json'},
+       body:JSON.stringify({account:u.account,password:u.password,code:c})
+     }).then(r=>r.json()).then(function(r){
+       if(r&&r.ok&&r.msg){
+         if(r.user){
+           var remotePts=r.user.points||0;
+           localStorage.setItem('userPoints',String(remotePts));
+           try{if(window.updatePointsUI)window.updatePointsUI();}catch(e){}
+           var pd=document.getElementById('userPointsDisplay');if(pd)pd.textContent=remotePts;
+           var td=document.getElementById('topPointsDisplay');if(td)td.textContent=remotePts;
+         }
+         alert('🎁 '+r.msg);closeM();
+       }else{
+         alert((r&&r.msg)||'兑换码无效');
+       }
+     }).catch(function(){alert('网络异常，请重试');});
+   }catch(e){alert('网络异常，请重试');}
  });
 })();
 </script>
