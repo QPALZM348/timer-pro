@@ -6696,9 +6696,15 @@ window.apiSync=function(account,password,data){return window.apiPost('/api/sync'
 window.applyRemoteUser=function(remote){
   if(!remote)return;
   var u=JSON.parse(localStorage.getItem('timerUser')||'{}');
-  ['isVip','vipExpireTime','svip','svipExpireTime','svipLevel','points'].forEach(function(k){
+  ['isVip','vipExpireTime','svip','svipExpireTime','svipLevel'].forEach(function(k){
     if(remote[k]!==undefined&&remote[k]!==null)u[k]=remote[k];
   });
+  // 积分是独立存储 userPoints，云端拉到后写回 userPoints
+  if(remote.points!==undefined&&remote.points!==null){
+    u.points=remote.points;
+    localStorage.setItem('userPoints',String(remote.points));
+    try{updatePointsUI();}catch(e){}
+  }
   localStorage.setItem('timerUser',JSON.stringify(u));
   try{localStorage.setItem('vipStatus','1');localStorage.setItem('isVip','1');}catch(e){}
   try{refreshUserUI();updateVipLocks();}catch(e){}
@@ -6733,7 +6739,8 @@ window.cloudPush=function(){
   try{
     var u=JSON.parse(localStorage.getItem('timerUser')||'{}');
     if(!u.account||!u.password)return;
-    var data={isVip:u.isVip,vipExpireTime:u.vipExpireTime,svip:u.svip,svipExpireTime:u.svipExpireTime,svipLevel:u.svipLevel,points:u.points};
+    var pts=parseInt(localStorage.getItem('userPoints')||'0');
+    var data={isVip:u.isVip,vipExpireTime:u.vipExpireTime,svip:u.svip,svipExpireTime:u.svipExpireTime,svipLevel:u.svipLevel,points:pts};
     window.apiSync(u.account,u.password,data);
   }catch(e){}
 };
