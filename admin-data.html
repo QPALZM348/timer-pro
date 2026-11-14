@@ -124,7 +124,7 @@ function renderUsers(){
       `<button class="mini-btn green" onclick="banUser('${u.account}',${!u.banned})">${u.banned?'解封':'封禁'}</button>
        <button class="mini-btn blue" onclick="editUser('${u.account}')">调积分</button>
        <button class="mini-btn red" onclick="delUser('${u.account}')">删除</button>`;
-    tr.innerHTML=`<td>${u.account||''}</td><td>${badge}</td><td>${fmt(u.svipExpireTime||u.vipExpireTime)}</td><td>${u.points||0}</td><td>${ops}</td>`;
+    tr.innerHTML=`<td>${u.account||''}</td><td>${badge}</td><td>${fmt(u.svipExpireTime||u.vipExpireTime)}</td><td><a href="javascript:showPointsLog('${u.account}')" style="color:#7de6e0;text-decoration:underline;cursor:pointer;">${u.points||0}</a></td><td>${ops}</td>`;
     utb.appendChild(tr);
   });
   document.getElementById('userEmpty').style.display=list.length?'none':'block';
@@ -160,6 +160,21 @@ async function delCode(code){
   if(!confirm(`确认删除激活码 ${code}？`))return;
   const d=await api('/api/admin/code/delete',{code});
   if(d.ok)loadAll();else alert(d.msg||'失败');
+}
+async function showPointsLog(account){
+  const d=await api('/api/admin/user/points-log?account='+encodeURIComponent(account));
+  if(!d.ok){alert(d.msg||'查询失败');return;}
+  const logs=d.logs||[];
+  if(!logs.length){alert(account+' 暂无积分流水');return;}
+  let lines=[account+' 积分流水（最近200条）',''];
+  logs.slice(0,30).forEach(l=>{
+    const dt=new Date(l.time);
+    const t=(dt.getMonth()+1)+'/'+dt.getDate()+' '+String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+    const sign=l.delta>0?'+':'';
+    lines.push(`${t}  ${l.source}  ${sign}${l.delta}  (余${l.balance})`);
+  });
+  if(logs.length>30)lines.push(`...共${logs.length}条`);
+  alert(lines.join('\n'));
 }
 </script>
 </body>
