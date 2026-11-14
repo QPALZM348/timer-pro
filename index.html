@@ -6737,10 +6737,13 @@ window.cloudPush=function(){
     window.apiSync(u.account,u.password,data);
   }catch(e){}
 };
-/* 启动时若已登录，自动拉一次云端；并每 60 秒上传一次 */
+/* 启动时若已登录，自动拉一次云端；并每 60 秒双向同步（后台改的积分/会员也能拉回来） */
 window.addEventListener('load',function(){
   setTimeout(window.cloudPull,800);
-  setInterval(window.cloudPush,60000);
+  setInterval(function(){
+    window.cloudPush();
+    window.cloudPull();
+  },60000);
 });
 </script>
 <script>
