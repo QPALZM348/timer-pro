@@ -35,16 +35,23 @@ button.secondary{background:#333}
 <label>管理员密钥（ADMIN_SECRET）</label>
 <input type="password" id="key" placeholder="输入管理员密钥">
 <label>会员类型</label>
-<select id="type">
+<select id="type" onchange="onTypeChange()">
   <option value="svip">💎 SVIP（含 VIP 全部权益）</option>
   <option value="vip">👑 VIP（基础会员）</option>
+  <option value="points">💰 积分码（兑换直接加积分）</option>
 </select>
+<div id="planBox">
 <label>套餐</label>
 <select id="plan">
   <option value="M">月卡（30天）</option>
   <option value="Q">季卡（90天）</option>
   <option value="Y">年卡（365天）</option>
 </select>
+</div>
+<div id="pointsBox" style="display:none;">
+<label>每个码加多少积分</label>
+<input type="number" id="points" value="100" min="1">
+</div>
 <label>数量</label>
 <input type="number" id="count" value="1" min="1" max="50">
 <button onclick="gen()">生成激活码</button>
@@ -61,6 +68,11 @@ button.secondary{background:#333}
 
 <script>
 const API='https://timerapi.de5.net';
+function onTypeChange(){
+  const t=document.getElementById('type').value;
+  document.getElementById('planBox').style.display=t==='points'?'none':'block';
+  document.getElementById('pointsBox').style.display=t==='points'?'block':'none';
+}
 function show(el,msg){el.style.display='block';el.textContent=msg;}
 function hide(el){el.style.display='none';}
 async function gen(){
@@ -68,13 +80,16 @@ async function gen(){
   const plan=document.getElementById('plan').value;
   const type=document.getElementById('type').value;
   const count=parseInt(document.getElementById('count').value,10)||1;
+  const points=parseInt(document.getElementById('points').value,10)||0;
   if(!key)return show(document.getElementById('err'),'请先输入管理员密钥');
   hide(document.getElementById('err'));hide(document.getElementById('ok'));
   try{
+    const body={plan,type,num:count};
+    if(type==='points')body.points=points;
     const r=await fetch(API+'/api/admin/gen',{
       method:'POST',
       headers:{'Content-Type':'application/json','X-Admin-Key':key},
-      body:JSON.stringify({plan,type,num:count})
+      body:JSON.stringify(body)
     });
     const d=await r.json();
     if(!d.ok){show(document.getElementById('err'),d.msg||'生成失败');return;}
