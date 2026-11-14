@@ -17,7 +17,7 @@ label{display:block;font-size:13px;color:#aaa;margin:10px 0 6px}
 input{width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#0f0c29;color:#eee;font-size:16px;outline:none}
 button{width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(90deg,#7f00ff,#e100ff);color:#fff;font-size:15px;font-weight:bold;cursor:pointer;margin-top:10px}
 table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
-th,td{padding:8px 6px;text-align:left;border-bottom:1px solid #2a2a4a;word-break:break-all}
+th,td{padding:8px 6px;text-align:left;border-bottom:1px solid #2a2a4a;word-break:break-all;vertical-align:middle}
 th{color:#888;font-weight:normal;font-size:12px}
 .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px}
 .badge.svip{background:#7f00ff;color:#fff}
@@ -25,12 +25,17 @@ th{color:#888;font-weight:normal;font-size:12px}
 .badge.free{background:#333;color:#aaa}
 .badge.used{background:#2d5a2d;color:#7dff9a}
 .badge.unused{background:#5a4a2d;color:#ffd700}
+.badge.banned{background:#5a2d2d;color:#ff6b6b}
 .empty{text-align:center;color:#666;padding:30px 0;font-size:14px}
 .err{color:#ff6b6b;font-size:13px;margin-top:8px}
 .stats{display:flex;gap:10px;margin-bottom:14px}
 .stat{flex:1;background:#1a1a2e;border-radius:10px;padding:12px;text-align:center;border:1px solid #2a2a4a}
 .stat .num{font-size:22px;font-weight:bold;color:#7de6e0}
 .stat .label{font-size:11px;color:#888;margin-top:4px}
+.mini-btn{padding:5px 8px;font-size:11px;margin:2px;border-radius:6px;border:none;cursor:pointer;color:#fff}
+.mini-btn.blue{background:#2d5a8a}
+.mini-btn.red{background:#8a2d2d}
+.mini-btn.green{background:#2d5a2d}
 </style>
 </head>
 <body>
@@ -56,8 +61,10 @@ th{color:#888;font-weight:normal;font-size:12px}
 </div>
 
 <div class="card" id="usersPanel">
+  <label>搜索用户（账号关键词）</label>
+  <input type="text" id="searchUser" placeholder="输入账号关键词筛选" oninput="renderUsers()">
   <table id="userTable">
-    <thead><tr><th>账号</th><th>会员</th><th>到期时间</th><th>积分</th><th>操作</th></tr></thead>
+    <thead><tr><th>账号</th><th>会员</th><th>到期</th><th>积分</th><th>操作</th></tr></thead>
     <tbody></tbody>
   </table>
   <div class="empty" id="userEmpty">暂无用户数据</div>
@@ -65,7 +72,7 @@ th{color:#888;font-weight:normal;font-size:12px}
 
 <div class="card" id="codesPanel" style="display:none">
   <table id="codeTable">
-    <thead><tr><th>激活码</th><th>类型</th><th>状态</th><th>使用者</th></tr></thead>
+    <thead><tr><th>激活码</th><th>类型</th><th>状态</th><th>使用者</th><th>操作</th></tr></thead>
     <tbody></tbody>
   </table>
   <div class="empty" id="codeEmpty">暂无激活码</div>
@@ -75,78 +82,84 @@ th{color:#888;font-weight:normal;font-size:12px}
 
 <script>
 const API='https://timerapi.de5.net';
-function fmt(ts){if(!ts)return'-';const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+let allUsers=[],allCodes=[];
+function fmt(ts){if(!ts)return'-';const d=new Date(ts);return (d.getMonth()+1)+'/'+d.getDate();}
 function showTab(name,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('usersPanel').style.display=name==='users'?'block':'none';
   document.getElementById('codesPanel').style.display=name==='codes'?'block':'none';
 }
+function api(path,body){
+  const key=document.getElementById('key').value.trim();
+  return fetch(API+path,body?{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Key':key},body:JSON.stringify(body)}:{headers:{'X-Admin-Key':key}}).then(r=>r.json());
+}
 async function loadAll(){
   const key=document.getElementById('key').value.trim();
   if(!key){document.getElementById('err').textContent='请先输入管理员密钥';return;}
   document.getElementById('err').textContent='';
   try{
-    // 并行加载用户和码
-    const [ur,cr]=await Promise.all([
-      fetch(API+'/api/admin/users',{headers:{'X-Admin-Key':key}}),
-      fetch(API+'/api/admin/codes?filter=all',{headers:{'X-Admin-Key':key}})
-    ]);
-    const ud=await ur.json();const cd=await cr.json();
-    if(!ud.ok){document.getElementById('err').textContent=ud.msg||'加载用户失败';return;}
-    if(!cd.ok){document.getElementById('err').textContent=cd.msg||'加载码失败';return;}
-
-    // 统计
+    const [ud,cd]=await Promise.all([api('/api/admin/users'),api('/api/admin/codes?filter=all')]);
+    if(!ud.ok){document.getElementById('err').textContent=ud.msg||'加载失败';return;}
+    allUsers=ud.users||[];allCodes=cd.codes||[];
     document.getElementById('stats').style.display='flex';
-    document.getElementById('totalUsers').textContent=ud.users.length;
-    document.getElementById('totalSvip').textContent=ud.users.filter(u=>u.svip&&u.svipExpireTime>Date.now()).length;
-    document.getElementById('totalCodes').textContent=cd.codes.length;
-
-    // 用户表
-    const utb=document.querySelector('#userTable tbody');utb.innerHTML='';
-    ud.users.forEach(u=>{
-      const tr=document.createElement('tr');
-      let badge;
-      if(u.svip&&u.svipExpireTime>Date.now())badge='<span class="badge svip">SVIP</span>';
-      else if(u.isVip&&u.vipExpireTime>Date.now())badge='<span class="badge vip">VIP</span>';
-      else badge='<span class="badge free">普通</span>';
-      if(u.banned)badge+=' <span class="badge" style="background:#5a2d2d;color:#ff6b6b">已封禁</span>';
-      const btn=u.banned
-        ?`<button style="padding:6px 10px;font-size:12px;margin:0;background:#2d5a2d" onclick="banUser('${u.account}',false)">解封</button>`
-        :`<button style="padding:6px 10px;font-size:12px;margin:0;background:#5a2d2d" onclick="banUser('${u.account}',true)">封禁</button>`;
-      tr.innerHTML=`<td>${u.account||''}</td><td>${badge}</td><td>${fmt(u.svipExpireTime||u.vipExpireTime)}</td><td>${u.points||0}</td><td>${btn}</td>`;
-      utb.appendChild(tr);
-    });
-    document.getElementById('userEmpty').style.display=ud.users.length?'none':'block';
-
-    // 码表
-    const ctb=document.querySelector('#codeTable tbody');ctb.innerHTML='';
-    cd.codes.forEach(c=>{
-      const tr=document.createElement('tr');
-      const typeBadge=c.type==='vip'?'<span class="badge vip">VIP</span>':'<span class="badge svip">SVIP</span>';
-      const statusBadge=c.status==='used'?'<span class="badge used">已用</span>':'<span class="badge unused">未用</span>';
-      tr.innerHTML=`<td>${c.code}</td><td>${typeBadge}</td><td>${statusBadge}</td><td>${c.account||'-'}</td>`;
-      ctb.appendChild(tr);
-    });
-    document.getElementById('codeEmpty').style.display=cd.codes.length?'none':'block';
-  }catch(e){
-    document.getElementById('err').textContent='网络异常：'+e.message;
-  }
+    document.getElementById('totalUsers').textContent=allUsers.length;
+    document.getElementById('totalSvip').textContent=allUsers.filter(u=>u.svip&&u.svipExpireTime>Date.now()).length;
+    document.getElementById('totalCodes').textContent=allCodes.length;
+    renderUsers();renderCodes();
+  }catch(e){document.getElementById('err').textContent='网络异常：'+e.message;}
+}
+function renderUsers(){
+  const kw=document.getElementById('searchUser').value.trim().toLowerCase();
+  const list=kw?allUsers.filter(u=>(u.account||'').toLowerCase().includes(kw)):allUsers;
+  const utb=document.querySelector('#userTable tbody');utb.innerHTML='';
+  list.forEach(u=>{
+    const tr=document.createElement('tr');
+    let badge;
+    if(u.svip&&u.svipExpireTime>Date.now())badge='<span class="badge svip">SVIP</span>';
+    else if(u.isVip&&u.vipExpireTime>Date.now())badge='<span class="badge vip">VIP</span>';
+    else badge='<span class="badge free">普通</span>';
+    if(u.banned)badge+=' <span class="badge banned">封禁</span>';
+    const ops=
+      `<button class="mini-btn green" onclick="banUser('${u.account}',${!u.banned})">${u.banned?'解封':'封禁'}</button>
+       <button class="mini-btn blue" onclick="editUser('${u.account}')">调积分</button>
+       <button class="mini-btn red" onclick="delUser('${u.account}')">删除</button>`;
+    tr.innerHTML=`<td>${u.account||''}</td><td>${badge}</td><td>${fmt(u.svipExpireTime||u.vipExpireTime)}</td><td>${u.points||0}</td><td>${ops}</td>`;
+    utb.appendChild(tr);
+  });
+  document.getElementById('userEmpty').style.display=list.length?'none':'block';
+}
+function renderCodes(){
+  const ctb=document.querySelector('#codeTable tbody');ctb.innerHTML='';
+  allCodes.forEach(c=>{
+    const tr=document.createElement('tr');
+    const typeBadge=c.type==='vip'?'<span class="badge vip">VIP</span>':'<span class="badge svip">SVIP</span>';
+    const statusBadge=c.status==='used'?'<span class="badge used">已用</span>':'<span class="badge unused">未用</span>';
+    tr.innerHTML=`<td>${c.code}</td><td>${typeBadge}</td><td>${statusBadge}</td><td>${c.account||'-'}</td><td><button class="mini-btn red" onclick="delCode('${c.code}')">删</button></td>`;
+    ctb.appendChild(tr);
+  });
+  document.getElementById('codeEmpty').style.display=allCodes.length?'none':'block';
 }
 async function banUser(account,ban){
-  const key=document.getElementById('key').value.trim();
-  if(!key)return;
-  if(ban&&!confirm(`确认封禁账号 ${account}？封禁后该账号无法登录和兑换。`))return;
-  try{
-    const r=await fetch(API+'/api/admin/ban',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-Admin-Key':key},
-      body:JSON.stringify({account,ban})
-    });
-    const d=await r.json();
-    if(d.ok){loadAll();}
-    else{alert(d.msg||'操作失败');}
-  }catch(e){alert('网络异常：'+e.message);}
+  if(ban&&!confirm(`确认封禁 ${account}？`))return;
+  const d=await api('/api/admin/ban',{account,ban});
+  if(d.ok)loadAll();else alert(d.msg||'失败');
+}
+async function editUser(account){
+  const pts=prompt(`给 ${account} 加多少积分？（负数为扣减）`);
+  if(pts===null)return;
+  const d=await api('/api/admin/user/edit',{account,points:parseInt(pts,10)||0});
+  if(d.ok)loadAll();else alert(d.msg||'失败');
+}
+async function delUser(account){
+  if(!confirm(`确认删除用户 ${account}？此操作不可恢复！`))return;
+  const d=await api('/api/admin/user/delete',{account});
+  if(d.ok)loadAll();else alert(d.msg||'失败');
+}
+async function delCode(code){
+  if(!confirm(`确认删除激活码 ${code}？`))return;
+  const d=await api('/api/admin/code/delete',{code});
+  if(d.ok)loadAll();else alert(d.msg||'失败');
 }
 </script>
 </body>
