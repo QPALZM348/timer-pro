@@ -1368,7 +1368,8 @@ function openFriends(){
                 document.getElementById('musicName').textContent=s.name;
                 document.getElementById('musicStatus').textContent='正在播放：'+s.artist;
                 document.getElementById('musicIcon').textContent='🎶';
-                // 停掉白噪音
+                document.getElementById('musicSearchControls').style.display='flex';
+                musicPlayPauseBtn.textContent='⏸ 暂停';
                 MusicPlayer.stop();
               };
               musicSearchResult.appendChild(item);
@@ -1378,6 +1379,16 @@ function openFriends(){
     }
     if(musicSearchBtn)musicSearchBtn.onclick=doMusicSearch;
     if(musicSearchInput)musicSearchInput.onkeydown=function(e){if(e.key==='Enter')doMusicSearch();};
+    // 暂停/继续按钮
+    const musicPlayPauseBtn=document.getElementById('musicPlayPauseBtn');
+    if(musicPlayPauseBtn)musicPlayPauseBtn.onclick=function(){
+      if(!searchAudio)return;
+      if(searchAudio.paused){
+        searchAudio.play();musicPlayPauseBtn.textContent='⏸ 暂停';
+      }else{
+        searchAudio.pause();musicPlayPauseBtn.textContent='▶ 继续';
+      }
+    };
     // 音量控制
     const musicVolume = document.getElementById('musicVolume');
     if(musicVolume){
@@ -5438,10 +5449,13 @@ function initVipFeatures(){
             <div style="font-size:12px;color:#a78bfa;margin-top:4px;" id="musicStatus">选择一首音乐开始播放</div>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:12px;">
-            <input type="text" id="musicSearchInput" placeholder="搜索歌曲/歌手（几万首免费音乐）" style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:14px;outline:none;">
-            <button id="musicSearchBtn" style="padding:10px 16px;margin:0;border-radius:8px;border:none;background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;font-size:14px;cursor:pointer;">搜索</button>
+            <input type="text" id="musicSearchInput" placeholder="搜索歌曲/歌手（几万首免费音乐）" style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:#fff;font-size:14px;outline:none;min-width:0;">
+            <button id="musicSearchBtn" style="padding:10px 16px;margin:0;border-radius:8px;border:none;background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;font-size:14px;cursor:pointer;white-space:nowrap;flex-shrink:0;">搜索</button>
         </div>
         <div id="musicSearchResult" style="max-height:300px;overflow-y:auto;margin-bottom:12px;display:none;"></div>
+        <div id="musicSearchControls" style="display:none;gap:8px;margin-bottom:12px;">
+            <button id="musicPlayPauseBtn" style="flex:1;padding:10px;margin:0;border:none;border-radius:8px;background:linear-gradient(135deg,#6a11cb,#2575fc);color:#fff;font-size:14px;cursor:pointer;">⏸ 暂停</button>
+        </div>
         <div id="musicList" style="max-height:200px;overflow-y:auto;margin-bottom:16px;"></div>
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;">
             <span style="color:#ccc;font-size:14px;">🔊</span>
