@@ -3340,7 +3340,7 @@ function openFriends(){
     }
 
     // ========== 看公益广告赚京币 ==========
-    const WATCH_AD_MAX = 5; // 每天最多5次
+    const WATCH_AD_MAX = 7; // 每天最多7次
     function getTodayWatched(){
         return parseInt(localStorage.getItem('watchAdCount_' + getTodayStr()) || '0');
     }
