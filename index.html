@@ -3338,6 +3338,73 @@ function openFriends(){
     if(checkInBtn){
         checkInBtn.onclick = doCheckIn;
     }
+
+    // ========== 看公益广告赚京币 ==========
+    const WATCH_AD_MAX = 5; // 每天最多5次
+    function getTodayWatched(){
+        return parseInt(localStorage.getItem('watchAdCount_' + getTodayStr()) || '0');
+    }
+    function doWatchAd(){
+        const watched = getTodayWatched();
+        if(watched >= WATCH_AD_MAX){
+            showToast('今天看够了，明天再来吧！');
+            return;
+        }
+        // 公益广告内容池
+        var __psp=[
+          '🌍 节约用纸，保护森林，从我做起',
+          '💧 节约用水，珍惜每一滴水',
+          '📱 合理使用手机，注意保护视力',
+          '🧘 劳逸结合，专注一小时休息十分钟',
+          '♻️ 垃圾分类，让城市更美好',
+          '🚭 公共场所禁止吸烟，呼吸清新空气',
+          '📚 每天阅读半小时，充实自己',
+          '🏃 每天运动三十分钟，健康生活每一天',
+          '🤝 尊老爱幼，传承中华传统美德',
+          '🌱 植树造林，为地球添一抹绿色'
+        ];
+        var __ps=__psp[Math.floor(Math.random()*__psp.length)];
+        // 弹出广告
+        const m = document.createElement('div');
+        m.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:99999;display:flex;align-items:center;justify-content:center;';
+        m.innerHTML=`
+            <div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:16px;padding:40px;max-width:340px;text-align:center;color:#fff;">
+                <div style="font-size:48px;margin-bottom:16px;">📢</div>
+                <div style="font-size:20px;font-weight:bold;margin-bottom:12px;">公益广告</div>
+                <div style="font-size:16px;line-height:1.6;margin-bottom:24px;">${__ps}</div>
+                <div id="adCountdown" style="font-size:14px;opacity:0.8;">10秒后获得奖励...</div>
+            </div>
+        `;
+        document.body.appendChild(m);
+        // 倒计时
+        var sec = 10;
+        var timer = setInterval(()=>{
+            sec--;
+            var el = document.getElementById('adCountdown');
+            if(el) el.textContent = sec + '秒后获得奖励...';
+            if(sec <= 0){
+                clearInterval(timer);
+                m.remove();
+                // 奖励0.5京币
+                addPoints(0.5);
+                localStorage.setItem('watchAdCount_' + getTodayStr(), String(watched + 1));
+                showToast('🎉 获得 0.5 京币！');
+                updateWatchAdUI();
+            }
+        },1000);
+    }
+    function updateWatchAdUI(){
+        const desc = document.getElementById('watchAdDesc');
+        if(desc){
+            const watched = getTodayWatched();
+            desc.textContent = `看一条公益广告赚0.5京币（今日已看${watched}/${WATCH_AD_MAX}次）`;
+        }
+    }
+    const watchAdBtn = document.getElementById('setWatchAd');
+    if(watchAdBtn){
+        watchAdBtn.onclick = doWatchAd;
+        updateWatchAdUI();
+    }
     // 页面加载时更新签到状态
     setTimeout(updateCheckInUI, 500);
 
@@ -4884,6 +4951,10 @@ function initVipFeatures(){
                 <button class="settings-btn" id="setCheckIn">
                                                     <span class="btn-icon">📅</span>每日签到
                                                     <span class="btn-desc" id="checkInDesc">每天签到领取积分奖励</span>
+                                                </button>
+                <button class="settings-btn" id="setWatchAd">
+                                                    <span class="btn-icon">📢</span>看公益广告
+                                                    <span class="btn-desc" id="watchAdDesc">看一条公益广告赚0.5京币</span>
                                                 </button>
                 <button class="settings-btn" id="setTasks">
                                                     <span class="btn-icon">📋</span>每日任务
