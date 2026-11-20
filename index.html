@@ -3450,9 +3450,12 @@ function openFriends(){
         }catch(e){}
     }
 
-    async function doEyeExercise(){
+    var __eyeForce = false;
+
+    async function doEyeExercise(force){
         if(__eyeRunning) return;
         __eyeRunning = true;
+        __eyeForce = (force === true);
 
         var mask = document.createElement('div');
         mask.id = 'eyeMask';
@@ -3463,8 +3466,10 @@ function openFriends(){
             '<div id="eyeTips" style="font-size:14px;color:#aab;max-width:300px;text-align:center;line-height:1.6;min-height:44px;margin-bottom:26px;">坐正，闭眼，双手洗净</div>' +
             '<div id="eyeBeat" style="width:150px;height:150px;border-radius:50%;border:3px solid rgba(126,200,255,0.35);display:flex;align-items:center;justify-content:center;font-size:54px;font-weight:bold;color:#7ec8ff;margin-bottom:24px;transition:transform .12s ease,border-color .12s ease;">0</div>' +
             '<div id="eyeProg" style="font-size:13px;color:#8aa;margin-bottom:30px;">节 0 / 4 · 拍 0 / 32</div>' +
-            '<button id="eyeStop" style="padding:10px 34px;font-size:15px;border-radius:24px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;">退出</button>' +
-            '<div style="margin-top:16px;font-size:12px;color:#556;">建议每用眼 40 分钟做一次</div>';
+            (__eyeForce
+                ? '<div style="padding:10px 30px;font-size:14px;border-radius:24px;border:1px solid rgba(255,180,80,0.5);background:rgba(255,180,80,0.12);color:#ffc46b;">已连续使用 10 分钟，请做完操再继续</div>'
+                : '<button id="eyeStop" style="padding:10px 34px;font-size:15px;border-radius:24px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.08);color:#fff;cursor:pointer;">退出</button>') +
+            '<div style="margin-top:16px;font-size:12px;color:#556;">' + (__eyeForce ? '本节操需完整做完，无法跳过' : '建议每用眼 40 分钟做一次') + '</div>';
         document.body.appendChild(mask);
 
         var elSec = document.getElementById('eyeSec');
@@ -3472,7 +3477,8 @@ function openFriends(){
         var elBeat = document.getElementById('eyeBeat');
         var elProg = document.getElementById('eyeProg');
 
-        document.getElementById('eyeStop').onclick = function(){ __eyeRunning = false; };
+        var stopBtn = document.getElementById('eyeStop');
+        if(stopBtn) stopBtn.onclick = function(){ __eyeRunning = false; };
 
         // 准备 3 秒
         for(var p = 3; p >= 1; p--){
@@ -3517,14 +3523,28 @@ function openFriends(){
         var m = document.getElementById('eyeMask');
         if(m) m.remove();
         __eyeRunning = false;
+        __eyeForce = false;
     }
 
     const eyeBtn = document.getElementById('setEyeExercise');
-    if(eyeBtn){ eyeBtn.onclick = doEyeExercise; }
+    if(eyeBtn){ eyeBtn.onclick = function(){ doEyeExercise(false); }; }
 
-    // Esc 退出眼保健操
+    // 连续使用 10 分钟自动触发（强制完成，无关闭键）
+    var __useSeconds = 0;
+    var USE_LIMIT_SECONDS = 600;
+    setInterval(function(){
+        if(document.hidden) return;
+        if(__eyeRunning) return;
+        __useSeconds++;
+        if(__useSeconds >= USE_LIMIT_SECONDS){
+            __useSeconds = 0;
+            doEyeExercise(true);
+        }
+    }, 1000);
+
+    // Esc 退出眼保健操（强制模式无效）
     document.addEventListener('keydown', function(e){
-        if(e.key === 'Escape' && __eyeRunning){
+        if(e.key === 'Escape' && __eyeRunning && !__eyeForce){
             __eyeRunning = false;
             try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(err){}
             var m = document.getElementById('eyeMask');
