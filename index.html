@@ -2091,7 +2091,7 @@ function openFriends(){
         const code=document.getElementById('resetCode').value.trim();
         const np=document.getElementById('newPwd').value.trim();
         if(!a||!code||!np)return alert('邮箱、验证码、新密码都要填');
-        if(np.length<2)return alert('密码至少 2 位');
+        if(np.length<6)return alert('密码至少 6 位');
         fetch(window.API_BASE+'/api/reset-password',{
             method:'POST',headers:{'Content-Type':'application/json'},
             body:JSON.stringify({email:a,code:code,password:np})
