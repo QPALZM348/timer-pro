@@ -3529,7 +3529,7 @@ function openFriends(){
         mask.id = 'eyeMask';
         mask.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(6,10,22,0.94);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:inherit;';
         mask.innerHTML =
-            '<div style="font-size:13px;color:#8aa;letter-spacing:2px;margin-bottom:18px;">2008 版 · 眼保健操</div>' +
+            '<div style="font-size:13px;color:#8aa;letter-spacing:2px;margin-bottom:18px;">2008 版 · 眼保健操（初音未来音乐）</div>' +
             '<div id="eyeSec" style="font-size:22px;font-weight:bold;margin-bottom:10px;color:#7ec8ff;">准备开始</div>' +
             '<div id="eyeTips" style="font-size:14px;color:#aab;max-width:300px;text-align:center;line-height:1.6;min-height:44px;margin-bottom:26px;">坐正，闭眼，双手洗净</div>' +
             '<div id="eyeBeat" style="width:150px;height:150px;border-radius:50%;border:3px solid rgba(126,200,255,0.35);display:flex;align-items:center;justify-content:center;font-size:54px;font-weight:bold;color:#7ec8ff;margin-bottom:24px;transition:transform .12s ease,border-color .12s ease;">0</div>' +
@@ -3548,45 +3548,89 @@ function openFriends(){
         var stopBtn = document.getElementById('eyeStop');
         if(stopBtn) stopBtn.onclick = function(){ __eyeRunning = false; };
 
-        // 准备 3 秒
-        for(var p = 3; p >= 1; p--){
-            if(!__eyeRunning) break;
-            elBeat.textContent = p;
-            eyeBeep(520, 0.12);
-            await eyeSleep(1000);
-        }
+        // 优先播放内置音乐（初音未来版眼保健操），失败则退回语音版
+        var eyeAudio = null;
+        try{
+            eyeAudio = new Audio('eye-music.mp3');
+            eyeAudio.preload = 'auto';
+            await eyeAudio.play();
+        }catch(e){ eyeAudio = null; }
 
-        for(var s = 0; s < EYE_SECTIONS.length; s++){
-            if(!__eyeRunning) break;
-            elSec.textContent = EYE_SECTIONS[s].name;
-            elTips.textContent = EYE_SECTIONS[s].tips;
-            eyeSpeak(EYE_SECTIONS[s].name + '。' + EYE_SECTIONS[s].tips);
-            await eyeSleep(3600);
-            if(!__eyeRunning) break;
-
-            for(var i = 1; i <= 32; i++){
-                if(!__eyeRunning) break;
-                elBeat.textContent = i;
-                elBeat.style.transform = 'scale(1.12)';
-                elBeat.style.borderColor = 'rgba(126,200,255,0.9)';
-                elProg.textContent = '节 ' + (s+1) + ' / 4 · 拍 ' + i + ' / 32';
-                eyeBeep(i % 8 === 0 ? 1046 : 784, 0.07);
-                await eyeSleep(180);
-                elBeat.style.transform = 'scale(1)';
-                elBeat.style.borderColor = 'rgba(126,200,255,0.35)';
-                await eyeSleep(620);
+        if(eyeAudio){
+            var eyeTotal = (isFinite(eyeAudio.duration) && eyeAudio.duration > 20) ? eyeAudio.duration : 273;
+            var eyeSecDur = eyeTotal / 4;
+            var lastSec = -1, lastBeat = -1;
+            while(__eyeRunning && !eyeAudio.ended && eyeAudio.currentTime < eyeTotal - 0.3){
+                var t = eyeAudio.currentTime;
+                var si = Math.max(0, Math.min(3, Math.floor(t / eyeSecDur)));
+                var bi = Math.max(1, Math.min(32, Math.floor((t - si * eyeSecDur) / (eyeSecDur / 32)) + 1));
+                if(si !== lastSec){
+                    lastSec = si;
+                    elSec.textContent = EYE_SECTIONS[si].name;
+                    elTips.textContent = EYE_SECTIONS[si].tips;
+                }
+                if(bi !== lastBeat){
+                    lastBeat = bi;
+                    elBeat.textContent = bi;
+                    elBeat.style.transform = 'scale(1.12)';
+                    elBeat.style.borderColor = 'rgba(126,200,255,0.9)';
+                    setTimeout(function(){
+                        elBeat.style.transform = 'scale(1)';
+                        elBeat.style.borderColor = 'rgba(126,200,255,0.35)';
+                    }, 130);
+                }
+                elProg.textContent = '节 ' + (si+1) + ' / 4 · 拍 ' + bi + ' / 32';
+                await eyeSleep(120);
             }
-        }
+            try{ eyeAudio.pause(); }catch(e){}
+            if(__eyeRunning){
+                elSec.textContent = '全部完成';
+                elTips.textContent = '做得很好，继续保持良好用眼习惯';
+                elBeat.textContent = '✓';
+                elProg.textContent = '节 4 / 4';
+                await eyeSleep(2600);
+            }
+        } else {
+            // 准备 3 秒
+            for(var p = 3; p >= 1; p--){
+                if(!__eyeRunning) break;
+                elBeat.textContent = p;
+                eyeBeep(520, 0.12);
+                await eyeSleep(1000);
+            }
 
-        if(__eyeRunning){
-            elSec.textContent = '全部完成';
-            elTips.textContent = '做得很好，继续保持良好用眼习惯';
-            elBeat.textContent = '✓';
-            elProg.textContent = '节 4 / 4';
-            eyeSpeak('眼保健操全部完成，请继续保持良好的用眼习惯');
-            await eyeSleep(3200);
-        }
+            for(var s = 0; s < EYE_SECTIONS.length; s++){
+                if(!__eyeRunning) break;
+                elSec.textContent = EYE_SECTIONS[s].name;
+                elTips.textContent = EYE_SECTIONS[s].tips;
+                eyeSpeak(EYE_SECTIONS[s].name + '。' + EYE_SECTIONS[s].tips);
+                await eyeSleep(3600);
+                if(!__eyeRunning) break;
 
+                for(var i = 1; i <= 32; i++){
+                    if(!__eyeRunning) break;
+                    elBeat.textContent = i;
+                    elBeat.style.transform = 'scale(1.12)';
+                    elBeat.style.borderColor = 'rgba(126,200,255,0.9)';
+                    elProg.textContent = '节 ' + (s+1) + ' / 4 · 拍 ' + i + ' / 32';
+                    eyeBeep(i % 8 === 0 ? 1046 : 784, 0.07);
+                    await eyeSleep(180);
+                    elBeat.style.transform = 'scale(1)';
+                    elBeat.style.borderColor = 'rgba(126,200,255,0.35)';
+                    await eyeSleep(620);
+                }
+            }
+
+            if(__eyeRunning){
+                elSec.textContent = '全部完成';
+                elTips.textContent = '做得很好，继续保持良好用眼习惯';
+                elBeat.textContent = '✓';
+                elProg.textContent = '节 4 / 4';
+                eyeSpeak('眼保健操全部完成，请继续保持良好的用眼习惯');
+                await eyeSleep(3200);
+            }
+
+        }
         try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){}
         var m = document.getElementById('eyeMask');
         if(m) m.remove();
@@ -5172,7 +5216,7 @@ function initVipFeatures(){
                                                 </button>
                 <button class="settings-btn" id="setEyeExercise">
                                                     <span class="btn-icon">👀</span>眼保健操
-                                                    <span class="btn-desc">2008版四节，口令语音带做</span>
+                                                    <span class="btn-desc">2008版四节 · 初音未来音乐带做</span>
                                                 </button>
                 <button class="settings-btn" id="setTasks">
                                                     <span class="btn-icon">📋</span>每日任务
