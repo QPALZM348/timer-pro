@@ -1025,6 +1025,7 @@ function openFriends(){
         pianoTimer: null,
         timers: [],
         tracks: [
+            {name: '🎤 初音未来', free: true, type: 'local', src: 'music/hatsune.mp3', desc: '本地歌曲 · 循环播放，陪你专注'},
             {name: '🌿 安静森林', free: true, type: 'forest', desc: '舒缓的自然环境音，适合专注'},
             {name: '☕ 咖啡馆', free: true, type: 'cafe', desc: '轻松的爵士氛围，适合休闲'},
             {name: '🌊 海浪声', free: false, type: 'waves', desc: '海浪白噪音，帮助放松入睡'},
@@ -1082,6 +1083,14 @@ function openFriends(){
             this.currentTrack = index;
             this.isPlaying = true;
             const track = this.tracks[index];
+            if(track.type === 'local'){
+                this.audio = new Audio(track.src);
+                this.audio.loop = true;
+                this.audio.volume = this.volume;
+                this.audio.play().catch(function(e){ console.warn('本地音乐播放失败:', e); });
+                this.updateUI();
+                return;
+            }
             const gain = this.ctx.createGain();
             gain.gain.value = this.volume;
             gain.connect(this.ctx.destination);
@@ -1251,6 +1260,7 @@ function openFriends(){
             this.updateUI();
         },
         stop: function(){
+            if(this.audio){ try{ this.audio.pause(); this.audio.currentTime = 0; }catch(e){} this.audio = null; }
             if(this.pianoTimer){ clearInterval(this.pianoTimer); this.pianoTimer = null; }
             if(this.timers && this.timers.length){
                 this.timers.forEach(t=>{ try{ clearTimeout(t); }catch(e){} });
@@ -1267,6 +1277,7 @@ function openFriends(){
         },
         setVolume: function(v){
             this.volume = v;
+            if(this.audio){ this.audio.volume = v; }
             this.nodes.forEach(n=>{
                 if(n.gain){ n.gain.value = v; }
             });
@@ -1286,7 +1297,7 @@ function openFriends(){
                 if(nameEl) nameEl.textContent = '未播放';
                 if(statusEl) statusEl.textContent = '选择一首音乐开始播放';
                 if(iconEl) iconEl.textContent = '🎵';
-                if(descEl) descEl.textContent = '5首精选音乐，前2首免费';
+                if(descEl) descEl.textContent = '精选音乐 + 本地歌曲';
             }
         },
         renderList: function(){
