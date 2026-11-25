@@ -1358,15 +1358,42 @@ function openFriends(){
         const kw=(musicSearchInput.value||'').trim();
         if(!kw)return;
         musicSearchResult.style.display='block';
-        musicSearchResult.innerHTML='<div style="text-align:center;color:#999;padding:20px;">搜索中...</div>';
+        musicSearchResult.innerHTML='';
+        // 本地歌曲优先命中（不依赖网络曲库）
+        var kwLow = kw.toLowerCase();
+        var localHits = [];
+        MusicPlayer.tracks.forEach(function(t,i){
+            if(t.type === 'local' && ['初音','未来','miku','hatsune'].some(function(k){ return kwLow.indexOf(k) >= 0; })){
+                localHits.push({t:t, i:i});
+            }
+        });
+        localHits.forEach(function(o){
+            var li = document.createElement('div');
+            li.style.cssText = 'padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.08);cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:rgba(106,17,203,0.18);';
+            li.innerHTML = '<div style="flex:1;min-width:0;"><div style="color:#fff;font-size:14px;">' + o.t.name + ' <span style="color:#4ade80;font-size:11px;">本地</span></div><div style="color:#888;font-size:12px;">' + o.t.desc + '</div></div><span style="color:#a78bfa;font-size:12px;margin-left:8px;">▶</span>';
+            li.onclick = function(){
+                stopSearchAudio();
+                MusicPlayer.selectTrack(o.i);
+                MusicPlayer.renderList();
+            };
+            musicSearchResult.appendChild(li);
+        });
+        var loadingTip = document.createElement('div');
+        loadingTip.style.cssText = 'text-align:center;color:#999;padding:16px;font-size:13px;';
+        loadingTip.textContent = '正在搜索网络曲库...';
+        musicSearchResult.appendChild(loadingTip);
         fetch(window.API_BASE+'/api/music/search?keyword='+encodeURIComponent(kw))
           .then(r=>r.json())
           .then(d=>{
             if(!d.ok||!d.songs||!d.songs.length){
-              musicSearchResult.innerHTML='<div style="text-align:center;color:#999;padding:20px;">没找到相关歌曲</div>';
+              if(localHits.length){
+                loadingTip.textContent = '网络曲库没找到，点上方本地歌曲即可播放';
+              } else {
+                musicSearchResult.innerHTML='<div style="text-align:center;color:#999;padding:20px;">没找到相关歌曲</div>';
+              }
               return;
             }
-            musicSearchResult.innerHTML='';
+            if(loadingTip && loadingTip.remove) loadingTip.remove();
             d.songs.forEach(s=>{
               const item=document.createElement('div');
               item.style.cssText='padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.08);cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
