@@ -2088,6 +2088,8 @@ function openFriends(){
                                 svipLevel:r.user.svipLevel,points:r.user.points};
                             saveUserData(nu);
                             localStorage.setItem('userPoints',String(r.user.points||0));
+                            localStorage.setItem('userCoins',String(r.user.coins||0));
+                            if(window.updateCoinsUI)window.updateCoinsUI();
                             markVipStorage();
                             alert(levelTxt?('登录成功，'+levelTxt+'已激活！'):'登录成功');refreshUserUI();
                             accInput.value=pwdInput.value='';
@@ -3091,6 +3093,41 @@ function openFriends(){
     window.addPoints = addPoints;
     window.spendPoints = spendPoints;
 
+    // ========== 硬币系统（硬币比积分大：1 硬币 = 10 积分）==========
+    const COIN_RATE = 10;
+    function getCoins(){
+        const c = parseFloat(localStorage.getItem('userCoins') || '0');
+        return isFinite(c) ? c : 0;
+    }
+    function fmtCoins(c){ return String(Math.round(c * 100) / 100).replace(/\.0+$/, ''); }
+    function addCoins(n){
+        const c = Math.round((getCoins() + n) * 100) / 100;
+        localStorage.setItem('userCoins', String(c));
+        updateCoinsUI();
+        if(window.cloudPush)window.cloudPush();
+        return c;
+    }
+    function spendCoins(n){
+        const c = getCoins();
+        if(c + 1e-9 < n) return false;
+        localStorage.setItem('userCoins', String(Math.round((c - n) * 100) / 100));
+        updateCoinsUI();
+        if(window.cloudPush)window.cloudPush();
+        return true;
+    }
+    function updateCoinsUI(){
+        const v = fmtCoins(getCoins());
+        const el = document.getElementById('userCoinsDisplay');
+        if(el) el.textContent = v;
+        const t2 = document.getElementById('topCoinsDisplay');
+        if(t2) t2.textContent = v;
+    }
+    window.getCoins = getCoins;
+    window.addCoins = addCoins;
+    window.spendCoins = spendCoins;
+    window.updateCoinsUI = updateCoinsUI;
+    window.COIN_RATE = COIN_RATE;
+
     // ========== 积分商城 ==========
     const SHOP_ITEMS = [
         {id:'theme_rainbow', emoji:'🌈', name:'彩虹主题', desc:'炫酷彩虹渐变背景', price:100, type:'theme', value:'rainbow'},
@@ -3403,6 +3440,8 @@ function openFriends(){
             const m = document.getElementById('shopModal');
             if(m){ m.classList.remove('hidden'); m.classList.add('show'); }
             renderShop();
+            if(window.updateCoinsUI) window.updateCoinsUI();
+            if(window.updatePointsUI) window.updatePointsUI();
         };
     }
 
@@ -3445,7 +3484,7 @@ function openFriends(){
         checkInBtn.onclick = doCheckIn;
     }
 
-    // ========== 看公益广告赚京币 ==========
+    // ========== 看公益广告赚硬币 ==========
     const WATCH_AD_MAX = 7; // 每天最多7次
     function getTodayWatched(){
         return parseInt(localStorage.getItem('watchAdCount_' + getTodayStr()) || '0');
@@ -3491,10 +3530,10 @@ function openFriends(){
             if(sec <= 0){
                 clearInterval(timer);
                 m.remove();
-                // 奖励0.5京币
-                addPoints(0.5);
+                // 奖励 0.5 枚硬币
+                if(window.addCoins) window.addCoins(0.5); else addPoints(5);
                 localStorage.setItem('watchAdCount_' + getTodayStr(), String(watched + 1));
-                showToast('🎉 获得 0.5 京币！');
+                showToast('🎉 获得 0.5 硬币！');
                 updateWatchAdUI();
             }
         },1000);
@@ -3503,7 +3542,7 @@ function openFriends(){
         const desc = document.getElementById('watchAdDesc');
         if(desc){
             const watched = getTodayWatched();
-            desc.textContent = `看一条公益广告赚0.5京币（今日已看${watched}/${WATCH_AD_MAX}次）`;
+            desc.textContent = `看一条公益广告赚 0.5 枚硬币（今日已看${watched}/${WATCH_AD_MAX}次）`;
         }
     }
     const watchAdBtn = document.getElementById('setWatchAd');
@@ -3511,6 +3550,7 @@ function openFriends(){
         watchAdBtn.onclick = doWatchAd;
         updateWatchAdUI();
     }
+    if(window.updateCoinsUI) window.updateCoinsUI();
 
     // ========== 眼保健操引导（2008版四节） ==========
     const EYE_SECTIONS = [
@@ -4809,7 +4849,7 @@ function initVipFeatures(){
             <span id="topUserName"></span>
             <span class="title-badge hidden" id="topTitleBadge"></span>
         </div>
-        <div class="uti-pts">💰 <span id="topPointsDisplay">0</span></div>
+        <div class="uti-pts">🪙 <span id="topCoinsDisplay">0</span> <span style="opacity:.85;font-size:11px;">硬币</span> · 💰 <span id="topPointsDisplay">0</span> <span style="opacity:.85;font-size:11px;">积分</span></div>
     </div>
     <div style="position:relative;">
         <img class="top-avatar" id="topAvatarImg" alt="">
@@ -5206,7 +5246,7 @@ function initVipFeatures(){
                                                 </button>
                 <button class="settings-btn" id="setWatchAd">
                                                     <span class="btn-icon">📢</span>看公益广告
-                                                    <span class="btn-desc" id="watchAdDesc">看一条公益广告赚0.5京币</span>
+                                                    <span class="btn-desc" id="watchAdDesc">看一条公益广告赚 0.5 枚硬币</span>
                                                 </button>
                 <button class="settings-btn" id="setEyeExercise">
                                                     <span class="btn-icon">👀</span>眼保健操
@@ -5948,9 +5988,12 @@ function initVipFeatures(){
     <div class="modal-box" style="max-width:480px;background:linear-gradient(135deg,#1a1d36,#2d1b4e);border:1px solid rgba(255,215,0,0.3);">
         <h3 class="modal-title" style="color:#ffd700;">🛒 积分商城</h3>
         <div style="text-align:center;padding:12px;background:rgba(255,215,0,0.1);border-radius:10px;margin-bottom:16px;">
-            <span style="color:#ffd700;font-size:18px;font-weight:bold;">💰 我的积分：<span id="userPointsDisplay">0</span></span>
+            <div style="color:#ffd700;font-size:18px;font-weight:bold;line-height:1.7;">💰 我的积分：<span id="userPointsDisplay">0</span></div>
+            <div style="color:#7ec8ff;font-size:18px;font-weight:bold;line-height:1.7;">🪙 我的硬币：<span id="userCoinsDisplay">0</span></div>
+            <div style="color:#999;font-size:12px;margin-top:4px;">1 枚硬币 = 10 积分（硬币更值钱）</div>
         </div>
-        <div style="text-align:center;margin-bottom:14px;">
+        <div style="text-align:center;margin-bottom:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+            <button id="coinToPointsBtn" type="button" style="border:1px solid rgba(126,200,255,.5);background:rgba(126,200,255,.14);color:#7ec8ff;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer;">🪙 硬币换积分</button>
             <button id="openPointsRedeem" type="button" style="border:1px solid rgba(255,215,0,.5);background:rgba(255,215,0,.12);color:#ffd700;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:bold;cursor:pointer;">🎁 输入积分兑换码</button>
         </div>
         <div id="shopItems" style="max-height:350px;overflow-y:auto;margin-bottom:16px;"></div>
@@ -5982,6 +6025,20 @@ function initVipFeatures(){
  function closeM(){modal.classList.add('hidden');}
  document.getElementById('pointsRedeemCancel').addEventListener('click',closeM);
  modal.addEventListener('click',function(e){if(e.target===modal)closeM();});
+ document.getElementById('coinToPointsBtn').addEventListener('click',function(){
+   var c=window.getCoins?window.getCoins():0;
+   if(c<=0){alert('还没有硬币，去看公益广告攒一些吧（每条 0.5 枚）');return;}
+   var inp=prompt('要兑换几枚硬币？（1 枚 = 10 积分）\n当前硬币：'+c, String(Math.min(1,c)));
+   if(inp===null)return;
+   var n=parseFloat(inp);
+   if(!isFinite(n)||n<=0){alert('请输入大于 0 的数字');return;}
+   n=Math.round(n*100)/100;
+   if(n>c){alert('硬币不够，当前只有 '+c+' 枚');return;}
+   if(!window.spendCoins(n)){alert('兑换失败');return;}
+   var pts=Math.round(n*10);
+   if(window.addPoints)window.addPoints(pts);
+   alert('🪙 兑换成功：'+n+' 枚硬币 → '+pts+' 积分');
+ });
  document.getElementById('pointsRedeemSubmit').addEventListener('click',function(){
    var c=input.value.trim().toUpperCase().replace(/\s+/g,'');
    if(!c){alert('请输入兑换码');return;}
@@ -7262,7 +7319,8 @@ window.cloudPush=function(){
     var u=JSON.parse(localStorage.getItem('timerUser')||'{}');
     if(!u.account||!u.password)return;
     var pts=parseInt(localStorage.getItem('userPoints')||'0');
-    var data={isVip:u.isVip,vipExpireTime:u.vipExpireTime,svip:u.svip,svipExpireTime:u.svipExpireTime,svipLevel:u.svipLevel,points:pts};
+    var coins=parseFloat(localStorage.getItem('userCoins')||'0')||0;
+    var data={isVip:u.isVip,vipExpireTime:u.vipExpireTime,svip:u.svip,svipExpireTime:u.svipExpireTime,svipLevel:u.svipLevel,points:pts,coins:coins};
     window.apiSync(u.account,u.password,data);
   }catch(e){}
 };
