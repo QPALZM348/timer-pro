@@ -3169,11 +3169,13 @@ function openFriends(){
         const list = document.getElementById('shopItems');
         if(!list) return;
         const points = getPoints();
+        const coins = getCoins();
         const purchased = getPurchasedItems();
 
         function itemCard(item){
             const owned = purchased.indexOf(item.id) >= 0;
-            const canAfford = points >= item.price;
+            const coinEq = Math.round((item.price / COIN_RATE) * 100) / 100;
+            const canAfford = points >= item.price || coins >= Math.round(((item.price - points) / COIN_RATE) * 100) / 100;
             return `<div style="display:flex;align-items:center;padding:12px;margin-bottom:10px;background:rgba(255,255,255,0.05);border-radius:10px;border:1px solid ${owned?'#4ade80':'rgba(255,255,255,0.1)'};">
                 <div style="font-size:32px;margin-right:12px;">${item.emoji}</div>
                 <div style="flex:1;">
@@ -3181,7 +3183,8 @@ function openFriends(){
                     <div style="color:#999;font-size:12px;margin-top:2px;">${item.desc}</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="color:#ffd700;font-size:14px;font-weight:bold;margin-bottom:6px;">${item.price} 积分</div>
+                    <div style="color:#ffd700;font-size:14px;font-weight:bold;margin-bottom:2px;">${item.price} 积分</div>
+                    <div style="color:#7ec8ff;font-size:11px;margin-bottom:6px;">≈ ${coinEq} 枚硬币</div>
                     ${owned
                         ? (item.type==='theme'
                             ? `<button onclick="equipItem('${item.id}')" style="padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;">装备</button>`
@@ -3212,6 +3215,28 @@ function openFriends(){
         updatePointsUI();
     }
 
+    // 支付：优先扣积分，积分不足时按 1 硬币 = 10 积分自动用硬币抵
+    function payForItem(price, title){
+        price = Number(price) || 0;
+        const pts = getPoints();
+        if(pts >= price){
+            return spendPoints(price);
+        }
+        const need = price - pts;
+        const coinsNeed = Math.round((need / COIN_RATE) * 100) / 100;
+        const coins = getCoins();
+        if(coins + 1e-9 < coinsNeed){
+            showToast('积分和硬币都不够（还需 ' + coinsNeed + ' 枚硬币或 ' + need + ' 积分）');
+            return false;
+        }
+        const tip = '积分不足，还差 ' + need + ' 积分。\n要用 ' + coinsNeed + ' 枚硬币抵扣吗？（1 枚 = 10 积分）';
+        if(!confirm(title ? ('【' + title + '】\n' + tip) : tip)) return false;
+        if(pts > 0) spendPoints(pts);
+        if(!spendCoins(coinsNeed)) return false;
+        return true;
+    }
+    window.payForItem = payForItem;
+
     function buyItem(id){
         const item = SHOP_ITEMS.find(i=>i.id===id);
         if(!item) return;
@@ -3239,7 +3264,7 @@ function openFriends(){
         }
         // VIP时长卡可重复购买（续费叠加）；其余物品已拥有则拦截
         if(!isVipCard && isPurchased(id)){ showToast('你已经拥有这个物品了'); return; }
-        if(!spendPoints(item.price)){ showToast('积分不足，继续努力吧！'); return; }
+        if(!payForItem(item.price, item.name)) return;
         if(!isVipCard){
             const purchased = getPurchasedItems();
             purchased.push(id);
@@ -3338,8 +3363,8 @@ function openFriends(){
       var lv=u.svipLevel||1;
       if(lv>=10)return showToast('已达 SVIP 满级 10');
       var cost=SVIP_UP_COST[lv];
-      if(getPoints()<cost)return showToast('积分不足，需要 '+cost+' 积分');
-      spendPoints(cost);u.svipLevel=lv+1;saveUserData(u);
+      if(!window.payForItem || !payForItem(cost, 'SVIP.'+(lv+1)+' 升级')) return;
+      u.svipLevel=lv+1;saveUserData(u);
       var fn=SVIP_FEATURES[lv];
       showToast('🎉 已提升至 SVIP.'+(lv+1)+'，解锁：'+fn.name);
       try{refreshUserUI();}catch(e){}
