@@ -2163,17 +2163,24 @@ function openFriends(){
             if(!phone) return;
             phone=String(phone).trim();
             if(!/^1[3-9]\d{9}$/.test(phone)) return alert('手机号格式不正确');
+            var em=(u.account&&u.account.indexOf('e_')===0)?u.account.slice(2):(u.email||'');
+            if(!em||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){
+                em=prompt('手机短信通道暂未开通，改用邮箱验证。\n请输入你的邮箱（验证码发到这里，填 QQ 号也行）', em||'');
+                if(!em) return;
+                em=window.normMail?window.normMail(em):em.trim();
+                if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return alert('邮箱格式不正确');
+            }
             fetch(window.API_BASE+'/api/send-code',{
                 method:'POST',headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({type:'phone',target:phone})
+                body:JSON.stringify({type:'email',target:em})
             }).then(r=>r.json()).then(function(r){
                 if(!r.ok) return alert(r.msg||'发送失败');
-                alert(r.debugCode?('测试模式验证码：'+r.debugCode+'（短信通道未开通，先模拟）'):'验证码已发送，请查看手机短信');
-                var code=prompt('请输入收到的验证码');
+                alert('验证码已发送到：'+em+'\n（5 分钟内有效，手机短信通道暂未开通，本次用邮箱验证）');
+                var code=prompt('请输入邮箱里收到的验证码');
                 if(!code) return;
                 fetch(window.API_BASE+'/api/bind-phone',{
                     method:'POST',headers:{'Content-Type':'application/json'},
-                    body:JSON.stringify({account:u.account,phone:phone,code:String(code).trim()})
+                    body:JSON.stringify({account:u.account,phone:phone,code:String(code).trim(),email:em})
                 }).then(r2=>r2.json()).then(function(r2){
                     if(r2.ok&&r2.user){
                         u.phone=r2.user.phone||phone;saveUserData(u);
